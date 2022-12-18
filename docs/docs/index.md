@@ -13,6 +13,8 @@ is [turnipxenon.com](https://turnipxenon.com).
 
 **Specific sections inside the documentation page:**
 
+- [ ] Setup?
+- [ ] Quickstart
 - [ ] [Onboarding guide](./onboarding.md)
 - [ ] Testing locally
 - [ ] Testing via dev stack
@@ -21,22 +23,8 @@ is [turnipxenon.com](https://turnipxenon.com).
 - [ ] API
 - [ ] Technical specification (generated)
 
-## Quick start
+## Contributing to README.md
 
-## TODO
-
-For full documentation visit [mkdocs.org](https://www.mkdocs.org).
-
-## Commands
-
-* `mkdocs new [dir-name]` - Create a new project.
-* `mkdocs serve` - Start the live-reloading docs server.
-* `mkdocs build` - Build the documentation site.
-* `mkdocs -h` - Print help message and exit.
-
-## Project layout
-
-    mkdocs.yml    # The configuration file.
-    docs/
-        index.md  # The documentation homepage.
-        ...       # Other markdown pages, images and other files.
+**Do not edit `./README.md`!** Instead, edit `./docs/docs/index.md`. After editing that file,
+run `go run scripts/sync_mkdocs_readme.go` from the root folder `/`. That should automatically transform all the
+relative references.
