@@ -15,7 +15,7 @@ is [turnipxenon.com](https://turnipxenon.com).
 
 - [ ] Setup?
 - [ ] Quickstart
-- [ ] [Onboarding guide](./docs/docs/onboarding.md)
+- [ ] [Onboarding guide](./onboarding.md)
 - [ ] Testing locally
 - [ ] Testing via dev stack
 - [ ] Deploying to production
