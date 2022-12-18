@@ -15,7 +15,7 @@
 # vendor/
 
 # project specific
-static/
+assets/
 
 # IDE
 .vscode
