@@ -7,7 +7,6 @@
 - Go 1.17
 - Docker
 
-
 **Steps:**
 
 1. Run docker.
@@ -21,8 +20,18 @@
     ```
 3. Run the go program
     ```shell
-    go run cmd/turnip.go
+    go run cmd/turnip.go -port 8300
     ```
+
+Locally, these three ports have special meanings:
+
+- 8000
+- 8010
+- 8020
+
+Using any other port may not work.
+
+If no port argument was given, we default to port 8000.
 
 ## MKDocs
 
