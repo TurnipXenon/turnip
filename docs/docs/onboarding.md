@@ -2,10 +2,27 @@
 
 ## Setup
 
-- Go
-- Docker?
+**Required:**
 
-TODO
+- Go 1.17
+- Docker
+
+
+**Steps:**
+
+1. Run docker.
+    ```shell
+    docker-compose up
+    ```
+    - This command runs all the dependencies that our Go program will call.
+2. Install the go dependencies
+    ```shell
+    go install
+    ```
+3. Run the go program
+    ```shell
+    go run cmd/turnip.go
+    ```
 
 ## MKDocs
 
