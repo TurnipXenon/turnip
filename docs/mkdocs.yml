@@ -2,3 +2,4 @@ site_name: Turnip
 nav:
   - Home: index.md
   - Onboarding: onboarding.md
+  - Private workflow: private_workflow.md

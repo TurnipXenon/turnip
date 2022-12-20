@@ -2,10 +2,36 @@
 
 ## Setup
 
-- Go
-- Docker?
+**Required:**
 
-TODO
+- Go 1.17
+- Docker
+
+**Steps:**
+
+1. Run docker.
+    ```shell
+    docker-compose up
+    ```
+    - This command runs all the dependencies that our Go program will call.
+2. Install the go dependencies
+    ```shell
+    go install
+    ```
+3. Run the go program
+    ```shell
+    go run cmd/turnip.go -is-local
+    ```
+
+Locally, these three ports have special meanings:
+
+- 8000
+- 8010
+- 8020
+
+Using any other port may not work.
+
+If no port argument was given, we default to port 8000.
 
 ## MKDocs
 
@@ -32,4 +58,4 @@ When entering these commands, go to `/docs` instead of being in the project's ro
 
 1. Make changes
 2. See changes made using `mkdocs serve`
-3. If you edited index.md, run `go run scripts/sync_mkdocs_readme.go` from the root folder `/`.
+3. If you edited index.md, run `go run dev/sync_mkdocs_readme.go` from the root folder `/`.

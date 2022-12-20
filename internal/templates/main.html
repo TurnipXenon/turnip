@@ -31,6 +31,17 @@
     <main>
         <section id="warning" class="major-section">
 
+            <b>Current: {{.ActualHost}} -> {{.}}</b>
+            {{if eq .HostCode "localhost:8000"}}<h1>Testing</h1>{{end}}
+
+            {{if eq .HostCode "turnip"}}
+            <h2>Turnip is great</h2>
+            {{else if eq .HostCode "tomato"}}
+            <h2>Tomato is red</h2>
+            {{else if eq .HostCode "tangerine"}}
+            <h2>Tangerine is maybe orange</h2>
+            {{end}}
+
             <h1>⚠CONSTRUCTION⚠</h1>
             <p>
                 We are currently under the process of making this webpage. Thank you for your patience. 🙇‍♂️
@@ -178,5 +189,7 @@
 </aside>
 
 <footer></footer>
+
+</body>
 
 </html>
