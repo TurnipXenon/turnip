@@ -20,7 +20,7 @@
     ```
 3. Run the go program
     ```shell
-    go run cmd/turnip.go -port 8300
+    go run cmd/turnip.go -is-local
     ```
 
 Locally, these three ports have special meanings:
@@ -58,4 +58,4 @@ When entering these commands, go to `/docs` instead of being in the project's ro
 
 1. Make changes
 2. See changes made using `mkdocs serve`
-3. If you edited index.md, run `go run scripts/sync_mkdocs_readme.go` from the root folder `/`.
+3. If you edited index.md, run `go run dev/sync_mkdocs_readme.go` from the root folder `/`.

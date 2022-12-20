@@ -16,7 +16,9 @@ func main() {
 	if err != nil {
 		log.Fatalln(err)
 	}
-	defer sourceFile.Close() // ok to ignore error: file was opened read-only.
+	defer func(sourceFile *os.File) {
+		_ = sourceFile.Close()
+	}(sourceFile) // ok to ignore error: file was opened read-only.
 
 	destinationFile, err := os.Create("./README.md")
 	if err != nil {
@@ -25,7 +27,11 @@ func main() {
 
 	dataWriter := bufio.NewWriter(destinationFile)
 	defer func() {
-		dataWriter.Flush()
+		err := dataWriter.Flush()
+		if err != nil {
+			log.Printf("Error flushing writer: %s\n", err)
+		}
+
 		c := destinationFile.Close()
 		// Report the error from Close, if any.
 		// But do so only if there isn't already

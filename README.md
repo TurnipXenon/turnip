@@ -26,5 +26,5 @@ is [turnipxenon.com](https://turnipxenon.com).
 ## Contributing to README.md
 
 **Do not edit `./README.md`!** Instead, edit `./docs/docs/index.md`. After editing that file,
-run `go run scripts/sync_mkdocs_readme.go` from the root folder `/`. That should automatically transform all the
+run `go run dev/sync_mkdocs_readme.go` from the root folder `/`. That should automatically transform all the
 relative references.

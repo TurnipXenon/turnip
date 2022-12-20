@@ -1,0 +1,32 @@
+[
+  {
+    "HostCode": "turnip",
+    "StringMap": {
+      "DisplayName": "turnip"
+    },
+    "AliasList": [
+      "127.0.0.1:8000",
+      "localhost:8000"
+    ]
+  },
+  {
+    "HostCode": "tomato",
+    "StringMap": {
+      "DisplayName": "tomato"
+    },
+    "AliasList": [
+      "127.0.0.1:8010",
+      "localhost:8010"
+    ]
+  },
+  {
+    "HostCode": "tangerine",
+    "StringMap": {
+      "DisplayName": "tomato"
+    },
+    "AliasList": [
+      "127.0.0.1:8020",
+      "localhost:8020"
+    ]
+  }
+]

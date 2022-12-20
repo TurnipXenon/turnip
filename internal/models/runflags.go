@@ -1,5 +1,6 @@
 package models
 
 type RunFlags struct {
-	Port int
+	Port    int
+	IsLocal bool
 }
