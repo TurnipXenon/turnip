@@ -1,7 +1,13 @@
 package api
 
-import "net/http"
+import "github.com/TurnipXenon/Turnip/pkg/models"
+
+type UserRequest struct {
+	Username string
+	Password string // only for user input during POST
+}
 
 type Users interface {
-	PostUsers(resp http.ResponseWriter, req *http.Request)
+	// PostUsers returns no error if successful
+	PostUsers(userRequest *UserRequest) *models.ErrorWrapper
 }

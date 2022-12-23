@@ -4,12 +4,14 @@ package server
 
 import (
 	"context"
-	"fmt"
+	"errors"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
+
+	"github.com/TurnipXenon/Turnip/internal/util"
 )
 
 const ddbTimeout = time.Second * 3
@@ -19,11 +21,9 @@ type usersDynamoDBImpl struct {
 	ddbTableName *string
 }
 
-type CreateUserUserAlreadyExists struct{}
-
-func (m *CreateUserUserAlreadyExists) Error() string {
-	return "User already exists"
-}
+var (
+	UserAlreadyExists = errors.New("user already exists")
+)
 
 func NewUsersDynamoDB(d *dynamodb.DynamoDB) Users {
 	s := usersDynamoDBImpl{
@@ -45,8 +45,7 @@ func (u *usersDynamoDBImpl) GetUser(ud *User) (*User, error) {
 		TableName: u.ddbTableName,
 	})
 	if err != nil {
-		fmt.Printf("GetUser: Error: %s\n", err.Error())
-		return nil, err
+		return nil, util.WrapErrorWithDetails(err)
 	}
 
 	if item.Item == nil {
@@ -56,8 +55,7 @@ func (u *usersDynamoDBImpl) GetUser(ud *User) (*User, error) {
 	newUserData := User{}
 	err = dynamodbattribute.UnmarshalMap(item.Item, &newUserData)
 	if err != nil {
-		fmt.Printf("GetUser: Error: %s\n", err.Error())
-		return nil, err
+		return nil, util.WrapErrorWithDetails(err)
 	}
 
 	return &newUserData, nil
@@ -70,9 +68,13 @@ func (u *usersDynamoDBImpl) CreateUser(ud *User) error {
 
 	// check if user already exists
 	item, err := u.GetUser(ud)
+	if err != nil {
+		util.LogDetailedError(err)
+		return util.WrapErrorWithDetails(err)
+	}
 	if item != nil {
-		fmt.Printf("User already exists: %s\n", ud.Username)
-		return &CreateUserUserAlreadyExists{}
+		util.LogDetailedError(err)
+		return util.WrapErrorWithDetails(UserAlreadyExists)
 	}
 
 	_, err = u.ddb.PutItemWithContext(ctx, &dynamodb.PutItemInput{
@@ -83,7 +85,9 @@ func (u *usersDynamoDBImpl) CreateUser(ud *User) error {
 		TableName: u.ddbTableName,
 	})
 	if err != nil {
-		fmt.Printf("CreateUser: Error: %s\n", err.Error())
+		util.LogDetailedError(err)
+		return util.WrapErrorWithDetails(err)
 	}
-	return err
+
+	return nil
 }
