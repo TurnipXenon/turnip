@@ -5,12 +5,13 @@ import (
 )
 
 type User interface {
-	Initialize(*http.Request, *interface{})
+	Initialize(r *http.Request, hm map[string]Host)
 }
 
 type UserImpl struct {
 	ActualHost string
 	HostCode   string
+	Host       Host
 }
 
 // Initialize todo(turnip): documentation
@@ -20,5 +21,6 @@ func (u *UserImpl) Initialize(r *http.Request, hm map[string]Host) {
 
 	if ok {
 		u.HostCode = host.GetHostCode()
+		u.Host = host
 	}
 }

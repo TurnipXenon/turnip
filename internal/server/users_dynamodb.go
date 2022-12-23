@@ -9,7 +9,10 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
+	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
 )
+
+const ddbTimeout = time.Second * 3
 
 type usersDynamoDBImpl struct {
 	ddb          *dynamodb.DynamoDB
@@ -30,12 +33,11 @@ func NewUsersDynamoDB(d *dynamodb.DynamoDB) Users {
 	return &s
 }
 
-func (u *usersDynamoDBImpl) CreateUser(ud *UserData) error {
-	// todo: add this pattern to all calls here???
-	ctx, cancel := context.WithTimeout(context.TODO(), time.Second*3)
+// GetUser may return nil
+func (u *usersDynamoDBImpl) GetUser(ud *User) (*User, error) {
+	ctx, cancel := context.WithTimeout(context.TODO(), ddbTimeout)
 	defer cancel()
 
-	// check if user already exists
 	item, err := u.ddb.GetItemWithContext(ctx, &dynamodb.GetItemInput{
 		Key: map[string]*dynamodb.AttributeValue{
 			"Username": {S: aws.String(ud.Username)},
@@ -43,10 +45,32 @@ func (u *usersDynamoDBImpl) CreateUser(ud *UserData) error {
 		TableName: u.ddbTableName,
 	})
 	if err != nil {
-		fmt.Printf("CreateUser: Error: %s\n", err.Error())
-		return err
+		fmt.Printf("GetUser: Error: %s\n", err.Error())
+		return nil, err
 	}
-	if item.Item != nil {
+
+	if item.Item == nil {
+		return nil, nil
+	}
+
+	newUserData := User{}
+	err = dynamodbattribute.UnmarshalMap(item.Item, &newUserData)
+	if err != nil {
+		fmt.Printf("GetUser: Error: %s\n", err.Error())
+		return nil, err
+	}
+
+	return &newUserData, nil
+}
+
+func (u *usersDynamoDBImpl) CreateUser(ud *User) error {
+	// todo: add this pattern to all calls here???
+	ctx, cancel := context.WithTimeout(context.TODO(), ddbTimeout)
+	defer cancel()
+
+	// check if user already exists
+	item, err := u.GetUser(ud)
+	if item != nil {
 		fmt.Printf("User already exists: %s\n", ud.Username)
 		return &CreateUserUserAlreadyExists{}
 	}

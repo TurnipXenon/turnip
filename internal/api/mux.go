@@ -89,7 +89,7 @@ func RunServeMux(s *turnipserver.Server, flags models.RunFlags) {
 		Addr:    fmt.Sprintf(":%d", flags.Port),
 		// Good practice: enforce timeouts for servers you create!
 		WriteTimeout: 6 * time.Second,
-		ReadTimeout:  6 * time.Second,
+		ReadTimeout:  6 * time.Second, // todo: when local, extend timeout for debugging
 	}
 
 	fmt.Printf("Serving at http://localhost:%d\n", flags.Port)
