@@ -2,12 +2,11 @@
 
 package server
 
-import "golang.org/x/crypto/bcrypt"
+import (
+	"golang.org/x/crypto/bcrypt"
 
-type UserRequest struct {
-	Username string
-	Password string // only for user input during POST
-}
+	"github.com/TurnipXenon/Turnip/pkg/api"
+)
 
 type User struct {
 	Username        string
@@ -20,7 +19,7 @@ type Users interface {
 	GetUser(s *User) (*User, error)
 }
 
-func FromUserRequestToUserData(from UserRequest) (User, error) {
+func FromUserRequestToUserData(from *api.UserRequest) (User, error) {
 	password, err := bcrypt.GenerateFromPassword([]byte(from.Password), 14)
 	if err != nil {
 		return User{}, err
