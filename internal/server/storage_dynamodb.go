@@ -8,8 +8,6 @@ import (
 	"log"
 	"os"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 
 	"github.com/TurnipXenon/Turnip/internal/models"
@@ -19,19 +17,9 @@ type storageDynamodDBImpl struct {
 	svc *dynamodb.DynamoDB
 }
 
-func NewStorageDynamoDB() Storage {
-	sess := session.Must(session.NewSessionWithOptions(session.Options{
-		SharedConfigState: session.SharedConfigEnable,
-		Config: aws.Config{
-			Endpoint: aws.String("http://localhost:8200"),
-		},
-		//EC2IMDSEndpoint: "http://localhost:8000",
-	}))
-
-	// Create DynamoDB client
+func NewStorageDynamoDB(d *dynamodb.DynamoDB) Storage {
 	s := storageDynamodDBImpl{}
-	s.svc = dynamodb.New(sess)
-
+	s.svc = d
 	return &s
 }
 
@@ -72,7 +60,7 @@ func (s *storageDynamodDBImpl) GetHostMap() map[string]models.Host {
 	//}
 	//
 	//fmt.Println("Entering here")
-	//item, err := svc.GetItem(input)
+	//item, err := ddb.GetItem(input)
 	//fmt.Println("Entering here!!!!")
 	//if err != nil {
 	//	print("Sad :(", err.Error())

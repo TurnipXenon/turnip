@@ -5,6 +5,9 @@ import (
 	"html/template"
 	"log"
 	"net/http"
+	"time"
+
+	"github.com/gorilla/mux"
 
 	"github.com/TurnipXenon/Turnip/internal/models"
 	turnipserver "github.com/TurnipXenon/Turnip/internal/server"
@@ -44,7 +47,7 @@ func (m *Mux) handleIndex(response http.ResponseWriter, request *http.Request) {
 	}
 }
 
-func (m *Mux) serveSingle(pattern string, filename string, Mux *http.ServeMux) {
+func (m *Mux) serveSingle(pattern string, filename string, Mux *mux.Router) {
 	// from Deleplace @ https://stackoverflow.com/a/14187941/17836168
 	Mux.HandleFunc(pattern, func(w http.ResponseWriter, r *http.Request) {
 		print("Tests")
@@ -53,25 +56,44 @@ func (m *Mux) serveSingle(pattern string, filename string, Mux *http.ServeMux) {
 }
 
 func RunServeMux(s *turnipserver.Server, flags models.RunFlags) {
+	// For dev only - Set up CORS so React client can consume our API
+	//corsWrapper := cors.New(cors.Options{
+	//	AllowedMethods: []string{"GET", "POST"},
+	//	AllowedHeaders: []string{"Content-Type", "Origin", "Accept", "*"},
+	//})
+
 	m := Mux{
 		HostMap: s.Storage.GetHostMap(),
 	}
 
 	// setup server
-	Mux := http.NewServeMux()
+	router := mux.NewRouter()
 
-	Mux.HandleFunc("/api/hello", m.hello)
+	InitializeUserRoute(router, s)
+
+	router.HandleFunc("/api/hello", m.hello)
 
 	// root-based resources
-	m.serveSingle("/robots.txt", "./assets/robots.txt", Mux)
+	m.serveSingle("/robots.txt", "./assets/robots.txt", router)
 	// todo: favicon
 	// todo: sitemap
 
-	Mux.Handle("/assets/", http.FileServer(http.Dir("./")))
-	Mux.HandleFunc("/", m.handleIndex)
+	// from dodgy_coder @ https://stackoverflow.com/a/21251658/17836168
+	router.PathPrefix("/assets/").Handler(http.StripPrefix("/assets/", http.FileServer(http.Dir("./assets/"))))
+
+	router.HandleFunc("/", m.handleIndex).Methods("GET")
+
+	// todo: enforce timeouts
+	srv := &http.Server{
+		Handler: http.TimeoutHandler(router, 6*time.Second, "Timeout"), // todo: fix
+		Addr:    fmt.Sprintf(":%d", flags.Port),
+		// Good practice: enforce timeouts for servers you create!
+		WriteTimeout: 6 * time.Second,
+		ReadTimeout:  6 * time.Second,
+	}
 
 	fmt.Printf("Serving at http://localhost:%d\n", flags.Port)
-	err := http.ListenAndServe(fmt.Sprintf(":%d", flags.Port), Mux)
+	err := srv.ListenAndServe()
 	if err != nil {
 		log.Fatalln(err)
 	}
