@@ -3,6 +3,7 @@
 package server
 
 import (
+	"github.com/TurnipXenon/turnip_twirp/rpc/turnip"
 	"golang.org/x/crypto/bcrypt"
 
 	"github.com/TurnipXenon/Turnip/pkg/api"
@@ -19,7 +20,20 @@ type Users interface {
 	GetUser(s *User) (*User, error)
 }
 
-func FromUserRequestToUserData(from *api.UserRequest) (User, error) {
+func FromUserRequestToUserData2(from *api.UserRequest) (User, error) {
+	password, err := bcrypt.GenerateFromPassword([]byte(from.Password), 14)
+	if err != nil {
+		return User{}, err
+	}
+
+	return User{
+		Username:        from.Username,
+		HashedPassword:  string(password),
+		AccessGroupList: []string{},
+	}, nil
+}
+
+func FromUserRequestToUserData(from *turnip.CreateUserRequest) (User, error) {
 	password, err := bcrypt.GenerateFromPassword([]byte(from.Password), 14)
 	if err != nil {
 		return User{}, err

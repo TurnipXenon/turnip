@@ -9,7 +9,11 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/rs/cors"
+	"github.com/twitchtv/twirp"
 
+	"github.com/TurnipXenon/turnip_twirp/rpc/turnip"
+
+	turnipImpl "github.com/TurnipXenon/Turnip/internal/api/turnip"
 	"github.com/TurnipXenon/Turnip/internal/models"
 	turnipserver "github.com/TurnipXenon/Turnip/internal/server"
 )
@@ -18,13 +22,8 @@ type Mux struct {
 	HostMap map[string]models.Host
 }
 
-func (m *Mux) hello(response http.ResponseWriter, _ *http.Request) {
-	// todo: delete
-	response.WriteHeader(http.StatusOK)
-	_, _ = response.Write([]byte("Hello"))
-}
-
 func (m *Mux) handleIndex(response http.ResponseWriter, request *http.Request) {
+	// todo(turnip): delete
 	path := request.URL.Path
 	if path != "/" {
 		// todo: not found page!
@@ -57,23 +56,15 @@ func (m *Mux) serveSingle(pattern string, filename string, Mux *mux.Router) {
 }
 
 func RunServeMux(s *turnipserver.Server, flags models.RunFlags) {
-	// For dev only - Set up CORS so React client can consume our API
-	//corsWrapper := cors.New(cors.Options{
-	//	AllowedMethods: []string{"GET", "POST"},
-	//	AllowedHeaders: []string{"Content-Type", "Origin", "Accept", "*"},
-	//})
-
 	m := Mux{
 		HostMap: s.Storage.GetHostMap(),
 	}
 
-	// setup server
+	// setup turnip
+	turnipImpl := turnipImpl.NewTurnipHandler(s)
+	twirpHandler := turnip.NewTurnipServer(turnipImpl, twirp.WithServerPathPrefix("/api/v1/"))
 	router := mux.NewRouter()
-
-	InitializeUserRoute(router, s)
-	InitializeContentsRoute(router, s)
-
-	router.HandleFunc("/api/hello", m.hello)
+	router.Handle(twirpHandler.PathPrefix(), twirpHandler)
 
 	// root-based resources
 	m.serveSingle("/robots.txt", "./assets/robots.txt", router)
@@ -82,8 +73,6 @@ func RunServeMux(s *turnipserver.Server, flags models.RunFlags) {
 
 	// from dodgy_coder @ https://stackoverflow.com/a/21251658/17836168
 	//router.PathPrefix("/assets/").Handler(http.StripPrefix("/assets/", http.FileServer(http.Dir("./assets/"))))
-
-	//router.HandleFunc("/", m.handleIndex).Methods("GET")
 
 	// todo: take a look at CORS more for safety stuff
 	c := cors.New(cors.Options{

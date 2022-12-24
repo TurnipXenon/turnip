@@ -23,7 +23,7 @@ func (m *AuthMiddleware) ServeHttp(w http.ResponseWriter, r *http.Request) {
 	result, err := m.server.Tokens.GetToken(accessToken)
 	if err != nil {
 		util.LogDetailedError(err)
-		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		http.Error(w, "Internal turnip error", http.StatusInternalServerError)
 		return
 	}
 	if result == nil {

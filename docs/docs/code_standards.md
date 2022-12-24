@@ -50,3 +50,28 @@ We came up with these rules to help debugging but also avoid clutter and info le
     - If you want to wrap an error, use our custom `ErrorWrapper`.
 2. It's okay to log on every level of the stack using `LogDetailedError`.
 3. Do not show the client the errors as it is! Use `ErrorWrapper.UserMessage`!
+
+## Go imports
+
+Follow this structure:
+
+```go
+import (
+	// system
+	"context"
+	"errors"
+	"net/http"
+
+	// external
+	"github.com/twitchtv/twirp"
+	"golang.org/x/crypto/bcrypt"
+	
+	// internal remote: use go get
+	"github.com/TurnipXenon/turnip_twirp/rpc/turnip"
+
+	// internal local
+	"github.com/TurnipXenon/Turnip/internal/server"
+	"github.com/TurnipXenon/Turnip/internal/util"
+	"github.com/TurnipXenon/Turnip/pkg/models"
+)
+```
