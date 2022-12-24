@@ -13,6 +13,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
 
 	"github.com/TurnipXenon/Turnip/internal/util"
+	"github.com/TurnipXenon/Turnip/pkg/models"
 )
 
 type tokensDynamoDBImpl struct {
@@ -28,12 +29,12 @@ func NewTokensDynamoDB(d *dynamodb.DynamoDB) Tokens {
 	return &t
 }
 
-func (t *tokensDynamoDBImpl) GetOrCreateToken(ud *User) (*Token, error) {
+func (t *tokensDynamoDBImpl) GetOrCreateToken(ud *User) (*models.Token, error) {
 	// todo: add this pattern to all calls here???
 	ctx, cancel := context.WithTimeout(context.TODO(), ddbTimeout)
 	defer cancel()
 
-	token := Token{}
+	token := models.Token{}
 
 	// (1) if token exists
 	item, err := t.ddb.GetItemWithContext(ctx, &dynamodb.GetItemInput{
