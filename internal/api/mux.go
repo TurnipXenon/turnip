@@ -71,6 +71,7 @@ func RunServeMux(s *turnipserver.Server, flags models.RunFlags) {
 	router := mux.NewRouter()
 
 	InitializeUserRoute(router, s)
+	InitializeContentsRoute(router, s)
 
 	router.HandleFunc("/api/hello", m.hello)
 
@@ -80,9 +81,9 @@ func RunServeMux(s *turnipserver.Server, flags models.RunFlags) {
 	// todo: sitemap
 
 	// from dodgy_coder @ https://stackoverflow.com/a/21251658/17836168
-	router.PathPrefix("/assets/").Handler(http.StripPrefix("/assets/", http.FileServer(http.Dir("./assets/"))))
+	//router.PathPrefix("/assets/").Handler(http.StripPrefix("/assets/", http.FileServer(http.Dir("./assets/"))))
 
-	router.HandleFunc("/", m.handleIndex).Methods("GET")
+	//router.HandleFunc("/", m.handleIndex).Methods("GET")
 
 	// todo: take a look at CORS more for safety stuff
 	c := cors.New(cors.Options{

@@ -20,7 +20,7 @@ func LogDetailedError(err error) {
 	if ok {
 		details := runtime.FuncForPC(pc)
 
-		if err != nil {
+		if err == nil {
 			fmt.Printf("%s#%d: %s: error is not nil; feel free to delete log\n", file, no, details)
 			return
 		}

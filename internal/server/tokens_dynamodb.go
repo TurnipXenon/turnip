@@ -19,6 +19,7 @@ import (
 type tokensDynamoDBImpl struct {
 	ddb          *dynamodb.DynamoDB
 	ddbTableName *string
+	// todo: global secondary index
 }
 
 func NewTokensDynamoDB(d *dynamodb.DynamoDB) Tokens {
@@ -29,7 +30,7 @@ func NewTokensDynamoDB(d *dynamodb.DynamoDB) Tokens {
 	return &t
 }
 
-func (t *tokensDynamoDBImpl) GetOrCreateToken(ud *User) (*models.Token, error) {
+func (t *tokensDynamoDBImpl) GetOrCreateTokenByUsername(ud *User) (*models.Token, error) {
 	// todo: add this pattern to all calls here???
 	ctx, cancel := context.WithTimeout(context.TODO(), ddbTimeout)
 	defer cancel()
@@ -37,19 +38,27 @@ func (t *tokensDynamoDBImpl) GetOrCreateToken(ud *User) (*models.Token, error) {
 	token := models.Token{}
 
 	// (1) if token exists
-	item, err := t.ddb.GetItemWithContext(ctx, &dynamodb.GetItemInput{
-		Key: map[string]*dynamodb.AttributeValue{
-			"Username": {S: aws.String(ud.Username)},
+	query, err := t.ddb.QueryWithContext(ctx, &dynamodb.QueryInput{
+		KeyConditions: map[string]*dynamodb.Condition{
+			"Username": {
+				ComparisonOperator: aws.String("EQ"),
+				AttributeValueList: []*dynamodb.AttributeValue{
+					{
+						S: aws.String(ud.Username),
+					},
+				},
+			},
 		},
+		IndexName: aws.String("UsernameIndex"),
 		TableName: t.ddbTableName,
 	})
 	if err != nil {
 		util.LogDetailedError(err)
 		return nil, err
 	}
-	if item.Item != nil {
+	if len(query.Items) > 0 {
 		// it exists!
-		err = dynamodbattribute.UnmarshalMap(item.Item, &token)
+		err = dynamodbattribute.UnmarshalMap(query.Items[0], &token)
 		if err != nil {
 			util.LogDetailedError(err)
 			return nil, err
@@ -61,7 +70,7 @@ func (t *tokensDynamoDBImpl) GetOrCreateToken(ud *User) (*models.Token, error) {
 	// (2) if token does not exist
 	token.AccessToken, err = generateSecureToken(40)
 	if err != nil {
-		fmt.Printf("GetOrCreateToken: Error: %s\n", err.Error())
+		fmt.Printf("GetOrCreateTokenByUsername: Error: %s\n", err.Error())
 		return nil, err
 	}
 
@@ -78,7 +87,7 @@ func (t *tokensDynamoDBImpl) GetOrCreateToken(ud *User) (*models.Token, error) {
 		TableName: t.ddbTableName,
 	})
 	if err != nil {
-		fmt.Printf("GetOrCreateToken: Error: %s\n", err.Error())
+		fmt.Printf("GetOrCreateTokenByUsername: Error: %s\n", err.Error())
 		return nil, err
 	}
 	return &token, err
@@ -92,4 +101,32 @@ func generateSecureToken(length int) (string, error) {
 		return "", err
 	}
 	return hex.EncodeToString(b), nil
+}
+
+func (t *tokensDynamoDBImpl) GetToken(accessToken string) (*models.Token, error) {
+	ctx, cancel := context.WithTimeout(context.TODO(), ddbTimeout)
+	defer cancel()
+
+	item, err := t.ddb.GetItemWithContext(ctx, &dynamodb.GetItemInput{
+		Key: map[string]*dynamodb.AttributeValue{
+			"TokenAccess": {S: aws.String(accessToken)},
+		},
+		TableName: t.ddbTableName,
+	})
+	if err != nil {
+		util.LogDetailedError(err)
+		return nil, err
+	}
+	if item.Item != nil {
+		token := models.Token{}
+		err = dynamodbattribute.UnmarshalMap(item.Item, &token)
+		if err != nil {
+			util.LogDetailedError(err)
+			return nil, err
+		}
+
+		return &token, nil
+	}
+
+	return nil, nil
 }

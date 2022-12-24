@@ -129,7 +129,7 @@ func (uh *usersHandler) PostTokens(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	token, err := uh.server.Tokens.GetOrCreateToken(user)
+	token, err := uh.server.Tokens.GetOrCreateTokenByUsername(user)
 
 	if err != nil || token == nil {
 		util.LogDetailedError(err)
@@ -137,7 +137,7 @@ func (uh *usersHandler) PostTokens(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	pt := responses.PostToken{
+	pt := responses.PostTokenResponse{
 		User: models.User{
 			Username: user.Username,
 		},
