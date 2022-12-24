@@ -12,6 +12,7 @@ import (
 	"github.com/TurnipXenon/Turnip/internal/util"
 	"github.com/TurnipXenon/Turnip/pkg/api"
 	"github.com/TurnipXenon/Turnip/pkg/models"
+	"github.com/TurnipXenon/Turnip/pkg/responses"
 )
 
 type usersHandler struct {
@@ -136,7 +137,13 @@ func (uh *usersHandler) PostTokens(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	b, err := json.Marshal(token)
+	pt := responses.PostToken{
+		User: models.User{
+			Username: user.Username,
+		},
+		Token: *token,
+	}
+	b, err := json.Marshal(pt)
 	if err != nil {
 		util.LogDetailedError(err)
 		return

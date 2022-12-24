@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
+	"github.com/rs/cors"
 
 	"github.com/TurnipXenon/Turnip/internal/models"
 	turnipserver "github.com/TurnipXenon/Turnip/internal/server"
@@ -83,9 +84,17 @@ func RunServeMux(s *turnipserver.Server, flags models.RunFlags) {
 
 	router.HandleFunc("/", m.handleIndex).Methods("GET")
 
+	// todo: take a look at CORS more for safety stuff
+	c := cors.New(cors.Options{
+		AllowedOrigins:   []string{"http://localhost:3000", "http://127.0.0.1:3000"},
+		AllowCredentials: false,
+		Debug:            true,
+	})
+	corsHandler := c.Handler(router)
+
 	// todo: enforce timeouts
 	srv := &http.Server{
-		Handler: http.TimeoutHandler(router, 6*time.Second, "Timeout"), // todo: fix
+		Handler: http.TimeoutHandler(corsHandler, 6*time.Second, "Timeout"), // todo: fix
 		Addr:    fmt.Sprintf(":%d", flags.Port),
 		// Good practice: enforce timeouts for servers you create!
 		WriteTimeout: 6 * time.Second,

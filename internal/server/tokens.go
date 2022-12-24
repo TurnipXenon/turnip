@@ -2,12 +2,8 @@
 
 package server
 
-type Token struct {
-	AccessToken string
-	GeneratedAt string // RFC3339
-	ExpiresAt   string // RFC3339
-}
+import "github.com/TurnipXenon/Turnip/pkg/models"
 
 type Tokens interface {
-	GetOrCreateToken(ud *User) (*Token, error)
+	GetOrCreateToken(ud *User) (*models.Token, error)
 }

@@ -73,7 +73,6 @@ func (u *usersDynamoDBImpl) CreateUser(ud *User) error {
 		return util.WrapErrorWithDetails(err)
 	}
 	if item != nil {
-		util.LogDetailedError(err)
 		return util.WrapErrorWithDetails(UserAlreadyExists)
 	}
 

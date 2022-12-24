@@ -6,6 +6,7 @@ require (
 	github.com/aws/aws-sdk-go v1.44.162
 	github.com/gorilla/mux v1.8.0
 	github.com/joho/godotenv v1.4.0
+	github.com/rs/cors v1.8.2
 	golang.org/x/crypto v0.0.0-20210921155107-089bfa567519
 )
 
