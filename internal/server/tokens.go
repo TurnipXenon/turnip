@@ -5,5 +5,6 @@ package server
 import "github.com/TurnipXenon/Turnip/pkg/models"
 
 type Tokens interface {
-	GetOrCreateToken(ud *User) (*models.Token, error)
+	GetOrCreateTokenByUsername(ud *User) (*models.Token, error)
+	GetToken(token string) (*models.Token, error)
 }

@@ -10,4 +10,9 @@ require (
 	golang.org/x/crypto v0.0.0-20210921155107-089bfa567519
 )
 
-require github.com/jmespath/go-jmespath v0.4.0 // indirect
+require (
+	github.com/TurnipXenon/turnip_twirp v0.0.0-20221224224824-66742860fbf0 // indirect
+	github.com/jmespath/go-jmespath v0.4.0 // indirect
+	github.com/twitchtv/twirp v8.1.3+incompatible // indirect
+	google.golang.org/protobuf v1.28.1 // indirect
+)
