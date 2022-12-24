@@ -3,8 +3,6 @@ package turnip
 import (
 	"context"
 	"errors"
-	"net/http"
-
 	"github.com/twitchtv/twirp"
 	"golang.org/x/crypto/bcrypt"
 
@@ -12,7 +10,6 @@ import (
 
 	"github.com/TurnipXenon/Turnip/internal/server"
 	"github.com/TurnipXenon/Turnip/internal/util"
-	"github.com/TurnipXenon/Turnip/pkg/models"
 )
 
 type turnipHandler struct {
@@ -38,21 +35,11 @@ func (h turnipHandler) CreateUser(ctx context.Context, request *turnip.CreateUse
 	err = h.server.Users.CreateUser(&userData)
 	if err != nil {
 		if errors.Unwrap(err) == server.UserAlreadyExists {
-			return nil, &models.ErrorWrapper{
-				Err:                 err,
-				UserMessage:         "username already exists",
-				ShouldDisplayToUser: false,
-				HttpErrorCode:       http.StatusBadRequest,
-			}
+			return nil, twirp.AlreadyExists.Error("username already exists")
 		}
 
 		util.LogDetailedError(err)
-		return nil, &models.ErrorWrapper{
-			Err:                 err,
-			UserMessage:         "",
-			ShouldDisplayToUser: false,
-			HttpErrorCode:       http.StatusInternalServerError,
-		}
+		return nil, twirp.InternalErrorWith(err)
 	}
 
 	return &turnip.CreateUserResponse{Msg: ""}, nil
@@ -65,20 +52,20 @@ func (h turnipHandler) Login(ctx context.Context, request *turnip.LoginRequest) 
 	})
 
 	if user == nil {
-		return nil, twirp.Unauthenticated.Error("Invalid credentials")
+		return nil, twirp.Unauthenticated.Error("invalid credentials")
 	}
 
 	err = bcrypt.CompareHashAndPassword([]byte(user.HashedPassword), []byte(request.Password))
 
 	if err != nil {
-		return nil, twirp.Unauthenticated.Error("Invalid credentials")
+		return nil, twirp.Unauthenticated.Error("invalid credentials")
 	}
 
 	token, err := h.server.Tokens.GetOrCreateTokenByUsername(user)
 
 	if err != nil || token == nil {
 		util.LogDetailedError(err)
-		return nil, twirp.InternalErrorf("Internal server error")
+		return nil, twirp.InternalErrorf("internal server error")
 	}
 
 	return &turnip.LoginResponse{

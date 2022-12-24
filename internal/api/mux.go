@@ -56,18 +56,20 @@ func (m *Mux) serveSingle(pattern string, filename string, Mux *mux.Router) {
 }
 
 func RunServeMux(s *turnipserver.Server, flags models.RunFlags) {
-	m := Mux{
-		HostMap: s.Storage.GetHostMap(),
-	}
+	//m := Mux{
+	//	HostMap: s.Storage.GetHostMap(),
+	//}
 
 	// setup turnip
 	turnipImpl := turnipImpl.NewTurnipHandler(s)
-	twirpHandler := turnip.NewTurnipServer(turnipImpl, twirp.WithServerPathPrefix("/api/v1/"))
-	router := mux.NewRouter()
-	router.Handle(twirpHandler.PathPrefix(), twirpHandler)
+	twirpHandler := turnip.NewTurnipServer(turnipImpl, twirp.WithServerPathPrefix("/api/v1"))
+
+	// todo: we might remove mux later
+	//router := mux.NewRouter()
+	//router.Handle(twirpHandler.PathPrefix(), twirpHandler)
 
 	// root-based resources
-	m.serveSingle("/robots.txt", "./assets/robots.txt", router)
+	//m.serveSingle("/robots.txt", "./assets/robots.txt", router)
 	// todo: favicon
 	// todo: sitemap
 
@@ -80,12 +82,13 @@ func RunServeMux(s *turnipserver.Server, flags models.RunFlags) {
 		AllowCredentials: false,
 		Debug:            true,
 	})
-	corsHandler := c.Handler(router)
+	corsHandler := c.Handler(twirpHandler)
 
 	// todo: enforce timeouts
 	srv := &http.Server{
-		Handler: http.TimeoutHandler(corsHandler, 6*time.Second, "Timeout"), // todo: fix
-		Addr:    fmt.Sprintf(":%d", flags.Port),
+		Handler: corsHandler, // todo: fix
+		//Handler: http.TimeoutHandler(corsHandler, 6*time.Second, "Timeout"), // todo: fix
+		Addr: fmt.Sprintf(":%d", flags.Port),
 		// Good practice: enforce timeouts for servers you create!
 		WriteTimeout: 6 * time.Second,
 		ReadTimeout:  6 * time.Second, // todo: when local, extend timeout for debugging
