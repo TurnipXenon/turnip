@@ -2,6 +2,7 @@ package api
 
 import (
 	"fmt"
+	"github.com/TurnipXenon/Turnip/internal/api/middleware"
 	"html/template"
 	"log"
 	"net/http"
@@ -64,6 +65,9 @@ func RunServeMux(s *turnipserver.Server, flags models.RunFlags) {
 	turnipImpl := turnipImpl.NewTurnipHandler(s)
 	twirpHandler := turnip.NewTurnipServer(turnipImpl, twirp.WithServerPathPrefix("/api/v1"))
 
+	// grab header details
+	authWrapper := middleware.NewAuthMiddleware(twirpHandler, s)
+
 	// todo: we might remove mux later
 	//router := mux.NewRouter()
 	//router.Handle(twirpHandler.PathPrefix(), twirpHandler)
@@ -82,7 +86,7 @@ func RunServeMux(s *turnipserver.Server, flags models.RunFlags) {
 		AllowCredentials: false,
 		Debug:            true,
 	})
-	corsHandler := c.Handler(twirpHandler)
+	corsHandler := c.Handler(authWrapper)
 
 	// todo: enforce timeouts
 	srv := &http.Server{

@@ -30,11 +30,7 @@ func NewTokensDynamoDB(d *dynamodb.DynamoDB) Tokens {
 	return &t
 }
 
-func (t *tokensDynamoDBImpl) GetOrCreateTokenByUsername(ud *User) (*models.Token, error) {
-	// todo: add this pattern to all calls here???
-	ctx, cancel := context.WithTimeout(context.TODO(), ddbTimeout)
-	defer cancel()
-
+func (t *tokensDynamoDBImpl) GetOrCreateTokenByUsername(ctx context.Context, ud *User) (*models.Token, error) {
 	token := models.Token{}
 
 	// (1) if token exists
@@ -70,7 +66,7 @@ func (t *tokensDynamoDBImpl) GetOrCreateTokenByUsername(ud *User) (*models.Token
 	// (2) if token does not exist
 	token.AccessToken, err = generateSecureToken(40)
 	if err != nil {
-		fmt.Printf("GetOrCreateTokenByUsername: Error: %s\n", err.Error())
+		util.LogDetailedError(err)
 		return nil, err
 	}
 
@@ -87,7 +83,7 @@ func (t *tokensDynamoDBImpl) GetOrCreateTokenByUsername(ud *User) (*models.Token
 		TableName: t.ddbTableName,
 	})
 	if err != nil {
-		fmt.Printf("GetOrCreateTokenByUsername: Error: %s\n", err.Error())
+		util.LogDetailedError(err)
 		return nil, err
 	}
 	return &token, err
@@ -104,6 +100,7 @@ func generateSecureToken(length int) (string, error) {
 }
 
 func (t *tokensDynamoDBImpl) GetToken(accessToken string) (*models.Token, error) {
+	// todo: how do we make this inline with twirp generated server stubs?
 	ctx, cancel := context.WithTimeout(context.TODO(), ddbTimeout)
 	defer cancel()
 

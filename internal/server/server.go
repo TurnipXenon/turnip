@@ -8,9 +8,10 @@ import (
 )
 
 type Server struct {
-	Storage Storage
-	Users   Users
-	Tokens  Tokens
+	Storage  Storage
+	Users    Users
+	Tokens   Tokens
+	Contents Contents
 }
 
 func InitializeServer(flags models.RunFlags) *Server {
@@ -27,6 +28,7 @@ func InitializeServer(flags models.RunFlags) *Server {
 
 	s.Users = NewUsersDynamoDB(ddb)
 	s.Tokens = NewTokensDynamoDB(ddb)
+	s.Contents = NewContentsDynamoDB(ddb)
 
 	return &s
 }

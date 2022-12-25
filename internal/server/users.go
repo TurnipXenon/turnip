@@ -3,6 +3,7 @@
 package server
 
 import (
+	"context"
 	"github.com/TurnipXenon/turnip_twirp/rpc/turnip"
 	"golang.org/x/crypto/bcrypt"
 
@@ -16,7 +17,7 @@ type User struct {
 }
 
 type Users interface {
-	CreateUser(ud *User) error
+	CreateUser(ctx context.Context, ud *User) error
 	GetUser(s *User) (*User, error)
 }
 

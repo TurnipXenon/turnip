@@ -61,11 +61,7 @@ func (u *usersDynamoDBImpl) GetUser(ud *User) (*User, error) {
 	return &newUserData, nil
 }
 
-func (u *usersDynamoDBImpl) CreateUser(ud *User) error {
-	// todo: add this pattern to all calls here???
-	ctx, cancel := context.WithTimeout(context.TODO(), ddbTimeout)
-	defer cancel()
-
+func (u *usersDynamoDBImpl) CreateUser(ctx context.Context, ud *User) error {
 	// check if user already exists
 	item, err := u.GetUser(ud)
 	if err != nil {

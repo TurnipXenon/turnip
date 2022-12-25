@@ -3,6 +3,8 @@ package turnip
 import (
 	"context"
 	"errors"
+	"github.com/TurnipXenon/Turnip/internal/api/middleware"
+
 	"github.com/twitchtv/twirp"
 	"golang.org/x/crypto/bcrypt"
 
@@ -10,6 +12,7 @@ import (
 
 	"github.com/TurnipXenon/Turnip/internal/server"
 	"github.com/TurnipXenon/Turnip/internal/util"
+	"github.com/TurnipXenon/Turnip/pkg/models"
 )
 
 type turnipHandler struct {
@@ -32,7 +35,7 @@ func (h turnipHandler) CreateUser(ctx context.Context, request *turnip.CreateUse
 		return nil, twirp.InternalErrorWith(err)
 	}
 
-	err = h.server.Users.CreateUser(&userData)
+	err = h.server.Users.CreateUser(ctx, &userData)
 	if err != nil {
 		if errors.Unwrap(err) == server.UserAlreadyExists {
 			return nil, twirp.AlreadyExists.Error("username already exists")
@@ -61,7 +64,7 @@ func (h turnipHandler) Login(ctx context.Context, request *turnip.LoginRequest) 
 		return nil, twirp.Unauthenticated.Error("invalid credentials")
 	}
 
-	token, err := h.server.Tokens.GetOrCreateTokenByUsername(user)
+	token, err := h.server.Tokens.GetOrCreateTokenByUsername(ctx, user)
 
 	if err != nil || token == nil {
 		util.LogDetailedError(err)
@@ -81,6 +84,44 @@ func (h turnipHandler) Login(ctx context.Context, request *turnip.LoginRequest) 
 	}, nil
 }
 
+func (h turnipHandler) IsAuthenticated(ctx context.Context) (*models.Token, error) {
+	accessToken := ctx.Value(middleware.AccessTokenKey)
+	if accessToken == nil {
+		return nil, twirp.Unauthenticated.Error("unauthorized access; try adding a Authorization: Token header")
+	}
+
+	token, err := h.server.Tokens.GetToken(accessToken.(string))
+	if err != nil {
+		return nil, twirp.InternalErrorWith(err)
+	}
+	if token != nil {
+		return nil, twirp.Unauthenticated.Error("unauthorized access")
+	}
+	return token, nil
+}
+
 func (h turnipHandler) CreateContent(ctx context.Context, request *turnip.CreateContentRequest) (*turnip.CreateContentResponse, error) {
-	return nil, twirp.Unimplemented.Error("CreateContent")
+	token, err := h.IsAuthenticated(ctx)
+	if token != nil {
+		return nil, err
+	}
+
+	content, err := h.server.Contents.CreateContent(ctx, request)
+	if err != nil {
+		return nil, twirp.InternalError("internal server error; try again later")
+	}
+
+	// todo(turnip): create tag
+
+	return &turnip.CreateContentResponse{
+		Title:         content.Title,
+		Description:   content.Description,
+		Content:       content.Content,
+		Media:         content.Media,
+		TagList:       content.TagList,
+		AccessDetails: content.AccessDetails,
+		Meta:          content.Meta,
+		PrimaryId:     content.PrimaryId,
+		CreatedAt:     content.CreatedAt,
+	}, twirp.Unimplemented.Error("CreateContent")
 }

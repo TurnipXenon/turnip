@@ -55,7 +55,7 @@ func (uh *usersHandler) PostUsers(userRequest *api.UserRequest) *models.ErrorWra
 		}
 	}
 
-	err = uh.server.Users.CreateUser(&userData)
+	err = uh.server.Users.CreateUser(nil, &userData)
 	if err != nil {
 		if errors.Unwrap(err) == server.UserAlreadyExists {
 			return &models.ErrorWrapper{
@@ -129,7 +129,7 @@ func (uh *usersHandler) PostTokens(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	token, err := uh.server.Tokens.GetOrCreateTokenByUsername(user)
+	token, err := uh.server.Tokens.GetOrCreateTokenByUsername(nil, user)
 
 	if err != nil || token == nil {
 		util.LogDetailedError(err)
