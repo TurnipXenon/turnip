@@ -3,8 +3,8 @@ package server
 import (
 	"log"
 
-	"github.com/TurnipXenon/Turnip/internal/clients"
-	"github.com/TurnipXenon/Turnip/internal/models"
+	"github.com/TurnipXenon/turnip/internal/clients"
+	"github.com/TurnipXenon/turnip/internal/models"
 )
 
 type Server struct {

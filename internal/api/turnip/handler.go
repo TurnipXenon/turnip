@@ -3,16 +3,16 @@ package turnip
 import (
 	"context"
 	"errors"
-	"github.com/TurnipXenon/Turnip/internal/api/middleware"
+	"github.com/TurnipXenon/turnip/internal/api/middleware"
 
 	"github.com/twitchtv/twirp"
 	"golang.org/x/crypto/bcrypt"
 
 	"github.com/TurnipXenon/turnip_twirp/rpc/turnip"
 
-	"github.com/TurnipXenon/Turnip/internal/server"
-	"github.com/TurnipXenon/Turnip/internal/util"
-	"github.com/TurnipXenon/Turnip/pkg/models"
+	"github.com/TurnipXenon/turnip/internal/server"
+	"github.com/TurnipXenon/turnip/internal/util"
+	"github.com/TurnipXenon/turnip/pkg/models"
 )
 
 type turnipHandler struct {

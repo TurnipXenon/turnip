@@ -6,9 +6,9 @@ import (
 
 	"github.com/joho/godotenv"
 
-	"github.com/TurnipXenon/Turnip/internal/api"
-	"github.com/TurnipXenon/Turnip/internal/models"
-	"github.com/TurnipXenon/Turnip/internal/server"
+	"github.com/TurnipXenon/turnip/internal/api"
+	"github.com/TurnipXenon/turnip/internal/models"
+	"github.com/TurnipXenon/turnip/internal/server"
 )
 
 func main() {

@@ -2,7 +2,7 @@
 
 package server
 
-import "github.com/TurnipXenon/Turnip/internal/models"
+import "github.com/TurnipXenon/turnip/internal/models"
 
 type Storage interface {
 	GetHostMap() map[string]models.Host

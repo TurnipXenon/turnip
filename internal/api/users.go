@@ -8,11 +8,11 @@ import (
 	"github.com/gorilla/mux"
 	"golang.org/x/crypto/bcrypt"
 
-	"github.com/TurnipXenon/Turnip/internal/server"
-	"github.com/TurnipXenon/Turnip/internal/util"
-	"github.com/TurnipXenon/Turnip/pkg/api"
-	"github.com/TurnipXenon/Turnip/pkg/models"
-	"github.com/TurnipXenon/Turnip/pkg/responses"
+	"github.com/TurnipXenon/turnip/internal/server"
+	"github.com/TurnipXenon/turnip/internal/util"
+	"github.com/TurnipXenon/turnip/pkg/api"
+	"github.com/TurnipXenon/turnip/pkg/models"
+	"github.com/TurnipXenon/turnip/pkg/responses"
 )
 
 type usersHandler struct {

@@ -7,7 +7,7 @@ import (
 	"github.com/TurnipXenon/turnip_twirp/rpc/turnip"
 	"golang.org/x/crypto/bcrypt"
 
-	"github.com/TurnipXenon/Turnip/pkg/api"
+	"github.com/TurnipXenon/turnip/pkg/api"
 )
 
 type User struct {

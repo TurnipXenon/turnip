@@ -2,7 +2,7 @@ package api
 
 import (
 	"fmt"
-	"github.com/TurnipXenon/Turnip/internal/api/middleware"
+	"github.com/TurnipXenon/turnip/internal/api/middleware"
 	"html/template"
 	"log"
 	"net/http"
@@ -14,9 +14,9 @@ import (
 
 	"github.com/TurnipXenon/turnip_twirp/rpc/turnip"
 
-	turnipImpl "github.com/TurnipXenon/Turnip/internal/api/turnip"
-	"github.com/TurnipXenon/Turnip/internal/models"
-	turnipserver "github.com/TurnipXenon/Turnip/internal/server"
+	turnipImpl "github.com/TurnipXenon/turnip/internal/api/turnip"
+	"github.com/TurnipXenon/turnip/internal/models"
+	turnipserver "github.com/TurnipXenon/turnip/internal/server"
 )
 
 type Mux struct {

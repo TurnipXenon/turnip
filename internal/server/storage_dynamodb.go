@@ -8,16 +8,16 @@ import (
 	"log"
 	"os"
 
-	"github.com/aws/aws-sdk-go/service/dynamodb"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 
-	"github.com/TurnipXenon/Turnip/internal/models"
+	"github.com/TurnipXenon/turnip/internal/models"
 )
 
 type storageDynamodDBImpl struct {
-	svc *dynamodb.DynamoDB
+	svc *dynamodb.Client
 }
 
-func NewStorageDynamoDB(d *dynamodb.DynamoDB) Storage {
+func NewStorageDynamoDB(d *dynamodb.Client) Storage {
 	s := storageDynamodDBImpl{}
 	s.svc = d
 	return &s

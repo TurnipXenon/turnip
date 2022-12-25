@@ -2,23 +2,25 @@ package server
 
 import (
 	"context"
-	"github.com/TurnipXenon/Turnip/internal/util"
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/service/dynamodb"
-	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
+
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/google/uuid"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/TurnipXenon/turnip_twirp/rpc/turnip"
+
+	"github.com/TurnipXenon/turnip/internal/util"
 )
 
 type contentsDynamoDBImpl struct {
-	ddb          *dynamodb.DynamoDB
+	ddb          *dynamodb.Client
 	ddbTableName *string
 	// todo: global secondary index
 }
 
-func NewContentsDynamoDB(d *dynamodb.DynamoDB) Contents {
+func NewContentsDynamoDB(d *dynamodb.Client) Contents {
 	// primary: primary id
 	// sort: created at
 	t := contentsDynamoDBImpl{
@@ -44,13 +46,13 @@ func (c contentsDynamoDBImpl) CreateContent(ctx context.Context, request *turnip
 		PrimaryId:     uuid.New().String(),
 		CreatedAt:     timestamppb.Now(),
 	}
-	itemInput, err := dynamodbattribute.MarshalMap(content)
+	itemInput, err := attributevalue.MarshalMap(content)
 	if err != nil {
 		util.LogDetailedError(err)
 		return nil, err
 	}
 
-	_, err = c.ddb.PutItemWithContext(ctx, &dynamodb.PutItemInput{
+	_, err = c.ddb.PutItem(ctx, &dynamodb.PutItemInput{
 		ConditionExpression: aws.String("attribute_not_exists(PrimaryId)"),
 		Item:                itemInput,
 		TableName:           c.ddbTableName,

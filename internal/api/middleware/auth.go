@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/TurnipXenon/Turnip/internal/server"
+	"github.com/TurnipXenon/turnip/internal/server"
 )
 
 // from https://drstearns.github.io/tutorials/gomiddleware/
