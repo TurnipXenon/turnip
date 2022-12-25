@@ -12,7 +12,7 @@ import (
 	"github.com/rs/cors"
 	"github.com/twitchtv/twirp"
 
-	"github.com/TurnipXenon/turnip_twirp/rpc/turnip"
+	"github.com/TurnipXenon/turnip_api/rpc/turnip"
 
 	turnipImpl "github.com/TurnipXenon/turnip/internal/api/turnip"
 	"github.com/TurnipXenon/turnip/internal/models"
@@ -62,8 +62,8 @@ func RunServeMux(s *turnipserver.Server, flags models.RunFlags) {
 	//}
 
 	// setup turnip
-	turnipImpl := turnipImpl.NewTurnipHandler(s)
-	twirpHandler := turnip.NewTurnipServer(turnipImpl, twirp.WithServerPathPrefix("/api/v1"))
+	ti := turnipImpl.NewTurnipHandler(s)
+	twirpHandler := turnip.NewTurnipServer(ti, twirp.WithServerPathPrefix("/api/v1"))
 
 	// grab header details
 	authWrapper := middleware.NewAuthMiddleware(twirpHandler, s)

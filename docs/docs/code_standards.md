@@ -67,7 +67,7 @@ import (
 	"golang.org/x/crypto/bcrypt"
 	
 	// internal remote: use go get
-	"github.com/TurnipXenon/turnip_twirp/rpc/turnip"
+	"github.com/TurnipXenon/turnip_api/rpc/turnip"
 
 	// internal local
 	"github.com/TurnipXenon/Turnip/internal/server"
