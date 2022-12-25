@@ -68,6 +68,7 @@ func (t *tokensDynamoDBImpl) GetOrCreateTokenByUsername(ctx context.Context, ud 
 	}
 
 	// (2) if token does not exist
+	token.Username = ud.Username
 	token.AccessToken, err = generateSecureToken(40)
 	if err != nil {
 		util.LogDetailedError(err)
@@ -79,14 +80,11 @@ func (t *tokensDynamoDBImpl) GetOrCreateTokenByUsername(ctx context.Context, ud 
 	//expiryTime := time.Now().Add(time.Hour * 24)
 	//token.ExpiresAt = expiryTime.Format(time.RFC3339)
 
-	itemInput, err := attributevalue.MarshalMap(token)
-	if err != nil {
-		util.LogDetailedError(err)
-		return nil, err
-	}
-
 	_, err = t.ddb.PutItem(ctx, &dynamodb.PutItemInput{
-		Item:      itemInput,
+		Item: map[string]types.AttributeValue{
+			"Username":    &types.AttributeValueMemberS{Value: token.Username},
+			"AccessToken": &types.AttributeValueMemberS{Value: token.AccessToken}, // todo: we could support expirable tokens later...
+		},
 		TableName: t.ddbTableName,
 	})
 	if err != nil {

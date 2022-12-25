@@ -45,7 +45,7 @@ func (h turnipHandler) CreateUser(ctx context.Context, request *turnip.CreateUse
 		return nil, twirp.InternalErrorWith(err)
 	}
 
-	return &turnip.CreateUserResponse{Msg: ""}, nil
+	return &turnip.CreateUserResponse{Msg: "Account created! Wait for admin to give your account priveleges!"}, nil
 }
 
 func (h turnipHandler) Login(ctx context.Context, request *turnip.LoginRequest) (*turnip.LoginResponse, error) {

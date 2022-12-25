@@ -73,20 +73,6 @@ func (u *usersDynamoDBImpl) CreateUser(ctx context.Context, ud *User) error {
 		return util.WrapErrorWithDetails(UserAlreadyExists)
 	}
 
-	type putItem struct {
-		Username       string
-		HashedPassword string
-	}
-	p := putItem{
-		Username:       ud.Username,
-		HashedPassword: ud.HashedPassword,
-	}
-	pi, err := attributevalue.MarshalMap(p)
-	if err != nil {
-		util.LogDetailedError(err)
-		return err
-	}
-
 	_, err = u.ddb.PutItem(ctx, &dynamodb.PutItemInput{
 		Item: map[string]types.AttributeValue{
 			"Username":       &types.AttributeValueMemberS{Value: ud.Username},
