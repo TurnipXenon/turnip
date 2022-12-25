@@ -7,7 +7,7 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"fmt"
-	"github.com/TurnipXenon/turnip_twirp/rpc/turnip"
+	"github.com/TurnipXenon/turnip_api/rpc/turnip"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 
 	"github.com/aws/aws-sdk-go-v2/aws"

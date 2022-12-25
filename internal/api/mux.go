@@ -12,7 +12,7 @@ import (
 	"github.com/rs/cors"
 	"github.com/twitchtv/twirp"
 
-	"github.com/TurnipXenon/turnip_twirp/rpc/turnip"
+	"github.com/TurnipXenon/turnip_api/rpc/turnip"
 
 	turnipImpl "github.com/TurnipXenon/turnip/internal/api/turnip"
 	"github.com/TurnipXenon/turnip/internal/models"

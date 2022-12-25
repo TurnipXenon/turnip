@@ -3,7 +3,6 @@ module github.com/TurnipXenon/turnip
 go 1.17
 
 require (
-	github.com/TurnipXenon/turnip_twirp v0.0.0-20221224224824-66742860fbf0
 	github.com/aws/aws-sdk-go-v2 v1.17.3
 	github.com/aws/aws-sdk-go-v2/config v1.18.7
 	github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue v1.10.8
@@ -19,6 +18,7 @@ require (
 )
 
 require (
+	github.com/TurnipXenon/turnip_api v0.0.0-20221225041926-5947bb2a63fa // indirect
 	github.com/aws/aws-sdk-go-v2/credentials v1.13.7 // indirect
 	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.12.21 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/configsources v1.1.27 // indirect

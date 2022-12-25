@@ -4,7 +4,7 @@ package server
 
 import (
 	"context"
-	"github.com/TurnipXenon/turnip_twirp/rpc/turnip"
+	"github.com/TurnipXenon/turnip_api/rpc/turnip"
 )
 
 type Tokens interface {
