@@ -5,19 +5,20 @@ package server
 import (
 	"context"
 	"errors"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 	"time"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/service/dynamodb"
-	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 
-	"github.com/TurnipXenon/Turnip/internal/util"
+	"github.com/TurnipXenon/turnip/internal/util"
 )
 
 const ddbTimeout = time.Second * 3
 
 type usersDynamoDBImpl struct {
-	ddb          *dynamodb.DynamoDB
+	ddb          *dynamodb.Client
 	ddbTableName *string
 }
 
@@ -25,7 +26,7 @@ var (
 	UserAlreadyExists = errors.New("user already exists")
 )
 
-func NewUsersDynamoDB(d *dynamodb.DynamoDB) Users {
+func NewUsersDynamoDB(d *dynamodb.Client) Users {
 	s := usersDynamoDBImpl{
 		ddb:          d,
 		ddbTableName: aws.String("Users"),
@@ -38,9 +39,9 @@ func (u *usersDynamoDBImpl) GetUser(ud *User) (*User, error) {
 	ctx, cancel := context.WithTimeout(context.TODO(), ddbTimeout)
 	defer cancel()
 
-	item, err := u.ddb.GetItemWithContext(ctx, &dynamodb.GetItemInput{
-		Key: map[string]*dynamodb.AttributeValue{
-			"Username": {S: aws.String(ud.Username)},
+	item, err := u.ddb.GetItem(ctx, &dynamodb.GetItemInput{
+		Key: map[string]types.AttributeValue{
+			"Username": &types.AttributeValueMemberS{Value: ud.Username},
 		},
 		TableName: u.ddbTableName,
 	})
@@ -53,7 +54,7 @@ func (u *usersDynamoDBImpl) GetUser(ud *User) (*User, error) {
 	}
 
 	newUserData := User{}
-	err = dynamodbattribute.UnmarshalMap(item.Item, &newUserData)
+	err = attributevalue.UnmarshalMap(item.Item, &newUserData)
 	if err != nil {
 		return nil, util.WrapErrorWithDetails(err)
 	}
@@ -61,11 +62,7 @@ func (u *usersDynamoDBImpl) GetUser(ud *User) (*User, error) {
 	return &newUserData, nil
 }
 
-func (u *usersDynamoDBImpl) CreateUser(ud *User) error {
-	// todo: add this pattern to all calls here???
-	ctx, cancel := context.WithTimeout(context.TODO(), ddbTimeout)
-	defer cancel()
-
+func (u *usersDynamoDBImpl) CreateUser(ctx context.Context, ud *User) error {
 	// check if user already exists
 	item, err := u.GetUser(ud)
 	if err != nil {
@@ -76,10 +73,10 @@ func (u *usersDynamoDBImpl) CreateUser(ud *User) error {
 		return util.WrapErrorWithDetails(UserAlreadyExists)
 	}
 
-	_, err = u.ddb.PutItemWithContext(ctx, &dynamodb.PutItemInput{
-		Item: map[string]*dynamodb.AttributeValue{
-			"Username":       {S: aws.String(ud.Username)},
-			"HashedPassword": {S: aws.String(ud.HashedPassword)},
+	_, err = u.ddb.PutItem(ctx, &dynamodb.PutItemInput{
+		Item: map[string]types.AttributeValue{
+			"Username":       &types.AttributeValueMemberS{Value: ud.Username},
+			"HashedPassword": &types.AttributeValueMemberS{Value: ud.HashedPassword},
 		},
 		TableName: u.ddbTableName,
 	})

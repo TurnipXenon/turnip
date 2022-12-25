@@ -8,7 +8,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/TurnipXenon/Turnip/internal/models"
+	"github.com/TurnipXenon/turnip/internal/models"
 )
 
 type storageLocalImpl struct{}

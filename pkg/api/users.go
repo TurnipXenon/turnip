@@ -1,6 +1,6 @@
 package api
 
-import "github.com/TurnipXenon/Turnip/pkg/models"
+import "github.com/TurnipXenon/turnip/pkg/models"
 
 type UserRequest struct {
 	Username string

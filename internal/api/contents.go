@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/TurnipXenon/Turnip/internal/server"
-	"github.com/TurnipXenon/Turnip/pkg/api"
+	"github.com/TurnipXenon/turnip/internal/server"
+	"github.com/TurnipXenon/turnip/pkg/api"
 	"github.com/gorilla/mux"
 )
 
