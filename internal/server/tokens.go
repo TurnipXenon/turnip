@@ -4,10 +4,11 @@ package server
 
 import (
 	"context"
-	"github.com/TurnipXenon/turnip/pkg/models"
+
+	"github.com/TurnipXenon/turnip_api/rpc/turnip"
 )
 
 type Tokens interface {
-	GetOrCreateTokenByUsername(ctx context.Context, ud *User) (*models.Token, error)
-	GetToken(token string) (*models.Token, error)
+	GetOrCreateTokenByUsername(ctx context.Context, ud *User) (*turnip.Token, error)
+	GetToken(token string) (*turnip.Token, error)
 }

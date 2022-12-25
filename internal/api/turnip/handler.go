@@ -8,11 +8,10 @@ import (
 	"github.com/twitchtv/twirp"
 	"golang.org/x/crypto/bcrypt"
 
-	"github.com/TurnipXenon/turnip_twirp/rpc/turnip"
+	"github.com/TurnipXenon/turnip_api/rpc/turnip"
 
 	"github.com/TurnipXenon/turnip/internal/server"
 	"github.com/TurnipXenon/turnip/internal/util"
-	"github.com/TurnipXenon/turnip/pkg/models"
 )
 
 type turnipHandler struct {
@@ -84,7 +83,7 @@ func (h turnipHandler) Login(ctx context.Context, request *turnip.LoginRequest) 
 	}, nil
 }
 
-func (h turnipHandler) IsAuthenticated(ctx context.Context) (*models.Token, error) {
+func (h turnipHandler) IsAuthenticated(ctx context.Context) (*turnip.Token, error) {
 	accessToken := ctx.Value(middleware.AccessTokenKey)
 	if accessToken == nil {
 		return nil, twirp.Unauthenticated.Error("unauthorized access; try adding a Authorization: Token header")

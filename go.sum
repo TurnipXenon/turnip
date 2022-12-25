@@ -1,5 +1,5 @@
-github.com/TurnipXenon/turnip_twirp v0.0.0-20221224224824-66742860fbf0 h1:BJZ49Kp92O8rFiiL0JhRzEmR4wXHRDb5mics724P/nI=
-github.com/TurnipXenon/turnip_twirp v0.0.0-20221224224824-66742860fbf0/go.mod h1:IVynvhn4pHStNTQ5LrpUFD1D/8/t9f4Ndvl+CwYm9HE=
+github.com/TurnipXenon/turnip_api v0.0.0-20221225041926-5947bb2a63fa h1:5uqqgIaHYPZxju8XwtNlY+6Dq5f7N75hYyAI4c4SX80=
+github.com/TurnipXenon/turnip_api v0.0.0-20221225041926-5947bb2a63fa/go.mod h1:ngMwedHDmhuA35oMoxaJPy0zt2AXR7ySoo02K7mYd3w=
 github.com/aws/aws-sdk-go-v2 v1.17.3 h1:shN7NlnVzvDUgPQ+1rLMSxY8OWRNDRYtiqe0p/PgrhY=
 github.com/aws/aws-sdk-go-v2 v1.17.3/go.mod h1:uzbQtefpm44goOPmdKyAlXSNcwlRgF3ePWVW6EtJvvw=
 github.com/aws/aws-sdk-go-v2/config v1.18.7 h1:V94lTcix6jouwmAsgQMAEBozVAGJMFhVj+6/++xfe3E=

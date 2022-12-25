@@ -9,7 +9,7 @@ import (
 	"github.com/google/uuid"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/TurnipXenon/turnip_twirp/rpc/turnip"
+	"github.com/TurnipXenon/turnip_api/rpc/turnip"
 
 	"github.com/TurnipXenon/turnip/internal/util"
 )

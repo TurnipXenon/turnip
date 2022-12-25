@@ -7,6 +7,7 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"fmt"
+	"github.com/TurnipXenon/turnip_api/rpc/turnip"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -15,7 +16,6 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 
 	"github.com/TurnipXenon/turnip/internal/util"
-	"github.com/TurnipXenon/turnip/pkg/models"
 )
 
 type tokensDynamoDBImpl struct {
@@ -32,8 +32,8 @@ func NewTokensDynamoDB(d *dynamodb.Client) Tokens {
 	return &t
 }
 
-func (t *tokensDynamoDBImpl) GetOrCreateTokenByUsername(ctx context.Context, ud *User) (*models.Token, error) {
-	token := models.Token{}
+func (t *tokensDynamoDBImpl) GetOrCreateTokenByUsername(ctx context.Context, ud *User) (*turnip.Token, error) {
+	token := turnip.Token{}
 
 	// from https://github.com/awsdocs/aws-doc-sdk-examples/blob/c3a3dbe1d420b0b75f3e8976e12ee3c96fbd1527/gov2/dynamodb/actions/table_basics.go#L247
 	keyEx := expression.Key("Username").Equal(expression.Value(ud.Username))
@@ -104,7 +104,7 @@ func generateSecureToken(length int) (string, error) {
 	return hex.EncodeToString(b), nil
 }
 
-func (t *tokensDynamoDBImpl) GetToken(accessToken string) (*models.Token, error) {
+func (t *tokensDynamoDBImpl) GetToken(accessToken string) (*turnip.Token, error) {
 	// todo: how do we make this inline with twirp generated server stubs?
 	ctx, cancel := context.WithTimeout(context.TODO(), ddbTimeout)
 	defer cancel()
@@ -120,7 +120,7 @@ func (t *tokensDynamoDBImpl) GetToken(accessToken string) (*models.Token, error)
 		return nil, err
 	}
 	if item.Item != nil {
-		token := models.Token{}
+		token := turnip.Token{}
 		err = attributevalue.UnmarshalMap(item.Item, &token)
 		if err != nil {
 			util.LogDetailedError(err)
