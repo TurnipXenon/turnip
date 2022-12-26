@@ -3,6 +3,8 @@ package main
 import (
 	"flag"
 	"log"
+	"os"
+	"strconv"
 
 	"github.com/joho/godotenv"
 
@@ -12,9 +14,19 @@ import (
 )
 
 func main() {
+	// override with environment
+	default_port_str := os.Getenv("PORT")
+	var port int
+	if default_port_str == "" {
+		port = 80
+	} else {
+		port, _ = strconv.Atoi(default_port_str)
+		// todo: handle error
+	}
+
 	// parse flags
 	flags := models.RunFlags{}
-	flag.IntVar(&flags.Port, "port", 8000, "port number to serve the turnip")
+	flag.IntVar(&flags.Port, "port", port, "port number to serve the turnip")
 	flag.BoolVar(&flags.IsLocal, "is-local", true, "determines whether to use local services or not")
 	flag.Parse()
 
