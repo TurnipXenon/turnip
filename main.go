@@ -15,7 +15,7 @@ func main() {
 	// parse flags
 	flags := models.RunFlags{}
 	flag.IntVar(&flags.Port, "port", 8000, "port number to serve the turnip")
-	flag.BoolVar(&flags.IsLocal, "is-local", false, "determines whether to use local services or not")
+	flag.BoolVar(&flags.IsLocal, "is-local", true, "determines whether to use local services or not")
 	flag.Parse()
 
 	// load environment
