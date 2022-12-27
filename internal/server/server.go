@@ -21,7 +21,7 @@ func InitializeServer(ctx context.Context, flags models.RunFlags) *Server {
 	s := Server{}
 
 	// region db
-	s.db = clients.NewPostgresDatabase(ctx)
+	s.db = clients.NewPostgresDatabase(ctx, flags)
 
 	if flags.IsLocal {
 		s.Storage = NewStorageLocal()
