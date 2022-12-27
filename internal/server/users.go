@@ -4,8 +4,15 @@ package server
 
 import (
 	"context"
-	"github.com/TurnipXenon/turnip_api/rpc/turnip"
+	"errors"
+
 	"golang.org/x/crypto/bcrypt"
+
+	"github.com/TurnipXenon/turnip_api/rpc/turnip"
+)
+
+var (
+	UserAlreadyExists = errors.New("migration already exists")
 )
 
 type User struct {

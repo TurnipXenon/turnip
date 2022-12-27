@@ -15,8 +15,8 @@ import (
 )
 
 type contentsDynamoDBImpl struct {
-	ddb          *dynamodb.Client
-	ddbTableName *string
+	db          *dynamodb.Client
+	dbTableName *string
 	// todo: global secondary index
 }
 
@@ -24,8 +24,8 @@ func NewContentsDynamoDB(d *dynamodb.Client) Contents {
 	// primary: primary id
 	// sort: created at
 	t := contentsDynamoDBImpl{
-		ddb:          d,
-		ddbTableName: aws.String("Contents"),
+		db:          d,
+		dbTableName: aws.String("Contents"),
 	}
 	return &t
 }
@@ -52,10 +52,10 @@ func (c contentsDynamoDBImpl) CreateContent(ctx context.Context, request *turnip
 		return nil, err
 	}
 
-	_, err = c.ddb.PutItem(ctx, &dynamodb.PutItemInput{
+	_, err = c.db.PutItem(ctx, &dynamodb.PutItemInput{
 		ConditionExpression: aws.String("attribute_not_exists(PrimaryId)"),
 		Item:                itemInput,
-		TableName:           c.ddbTableName,
+		TableName:           c.dbTableName,
 	})
 	if err != nil {
 		util.LogDetailedError(err)

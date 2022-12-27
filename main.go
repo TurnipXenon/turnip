@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"log"
 	"os"
@@ -38,8 +39,9 @@ func main() {
 	}
 
 	// todo: set up connections to other services like db
-	// ctx := context.Background()
-	s := server.InitializeServer(flags)
+	ctx := context.Background()
+	s := server.InitializeServer(ctx, flags)
+	defer s.Cleanup(ctx)
 
 	// run serve mux or router
 	api.RunServeMux(s, flags)

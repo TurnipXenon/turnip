@@ -33,6 +33,34 @@ Using any other port may not work.
 
 If no port argument was given, we default to port 8000.
 
+**todo: postgres onboarding**
+
+logs:
+```
+postgres=# CREATE DATABASE turnip
+postgres-# \connect turnip
+connection to server at "localhost" (::1), port 5432 failed: FATAL:  database "turnip" does not exist
+Previous connection kept
+postgres-# CREATE role turnipservice WITH LOGIN PASSWORD 'password';
+ERROR:  syntax error at or near "CREATE"
+LINE 2: CREATE role turnipservice WITH LOGIN PASSWORD 'password';
+^
+postgres=# CREATE ROLE turnipservice WITH LOGIN PASSWORD 'password';
+CREATE ROLE
+postgres=# ALTER ROLE turnipservice CREATEDB;
+ALTER ROLE
+postgres=# CREATE SCHEMA public;
+ERROR:  schema "public" already exists
+postgres=# GRANT ALL ON SCHEMA public to turnipservice;
+GRANT
+postgres=# GRANT ALL ON SCHEMA public to public;
+GRANT
+postgres=# \q
+Press any key to
+```
+
+Need this one too: `GRANT postgres to turnipservice;`
+
 ## MKDocs
 
 You don't really need to run through this to make edits to MKDocs, but if you want to see the layout and what it looks
