@@ -4,7 +4,8 @@ package server
 
 import (
 	"context"
-	"errors"
+	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 	"log"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -29,26 +30,42 @@ type usersPostgresImpl struct {
 }
 
 func (u *usersPostgresImpl) CreateUser(ctx context.Context, ud *User) error {
-	// check if migration already exists
-	row, err := u.db.Conn.Query(ctx, "INSERT") // todo GET User
-	row = row                                  // prevent compile error
+	// check if user already exists
+	rows, _ := u.db.Conn.Query(
+		ctx,
+		`SELECT EXISTS(
+    			SELECT username FROM public."User" WHERE username=$1
+           )`,
+		ud.Username,
+	)
+	defer rows.Close()
+	exists, err := pgx.CollectOneRow(rows, pgx.RowTo[bool])
 	if err != nil {
 		util.LogDetailedError(err)
 		return util.WrapErrorWithDetails(err)
 	}
-	// check if exists
-	// todo row
+	if exists {
+		return util.WrapErrorWithDetails(UserAlreadyExists)
+	}
+	rows.Close()
 
-	_, err = u.db.Conn.Exec(ctx, "") // todo PUT migration
+	_, err = u.db.Conn.Exec(
+		ctx,
+		`INSERT INTO public."User" 
+    			(primary_id, username, hashed_password, access_groups) 
+				VALUES ($1, $2, $3, '{}')`,
+		uuid.New().String(), // todo generate uuid
+		ud.Username,
+		ud.HashedPassword,
+	) // todo GET User
 	if err != nil {
 		util.LogDetailedError(err)
 		return util.WrapErrorWithDetails(err)
 	}
+
+	// todo: test this out
 
 	return nil
-
-	//TODO implement me
-	panic("implement me")
 }
 
 func (u *usersPostgresImpl) GetUser(s *User) (*User, error) {
@@ -62,18 +79,12 @@ func NewUsersPostgres(ctx context.Context, d *clients.PostgresDb) Users {
 		ddbTableName: aws.String("Users"),
 	}
 
-	// todo: check if table exists
-	rows, err := s.db.Conn.Query(ctx, ifUserTableExists)
-	if err != nil {
-		// todo
-		util.LogDetailedError(errors.New("TODO: handle error for table search"))
-		log.Fatalf("TODO: handle error for table search")
-	}
+	rows, _ := s.db.Conn.Query(ctx, ifUserTableExists)
 	defer rows.Close()
-
-	exists := false
-	for rows.Next() {
-		err = rows.Scan(&exists)
+	exists, err := pgx.CollectOneRow(rows, pgx.RowTo[bool])
+	if err != nil {
+		util.LogDetailedError(err)
+		log.Fatalf("failed to check if table exists: %v", err)
 	}
 	if err != nil || !exists {
 		// from RocketDonkey @ https://stackoverflow.com/a/14668907/17836168
