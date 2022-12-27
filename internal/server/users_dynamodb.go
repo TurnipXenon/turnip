@@ -4,13 +4,12 @@ package server
 
 import (
 	"context"
-	"errors"
-	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 
 	"github.com/TurnipXenon/turnip/internal/util"
 )
@@ -21,10 +20,6 @@ type usersDynamoDBImpl struct {
 	ddb          *dynamodb.Client
 	ddbTableName *string
 }
-
-var (
-	UserAlreadyExists = errors.New("user already exists")
-)
 
 func NewUsersDynamoDB(d *dynamodb.Client) Users {
 	s := usersDynamoDBImpl{
@@ -63,7 +58,7 @@ func (u *usersDynamoDBImpl) GetUser(ud *User) (*User, error) {
 }
 
 func (u *usersDynamoDBImpl) CreateUser(ctx context.Context, ud *User) error {
-	// check if user already exists
+	// check if migration already exists
 	item, err := u.GetUser(ud)
 	if err != nil {
 		util.LogDetailedError(err)
