@@ -18,7 +18,7 @@ func main() {
 	flags := models.RunFlags{}
 
 	// override with environment
-	flags.PostgresConnection = os.Getenv("PGCONN")
+	flags.PostgresConnection = os.Getenv("DATABASE_URL")
 	if flags.PostgresConnection == "" {
 		// local setup
 		flags.PostgresConnection = "postgresql://turnipservice:password@localhost:5432/turnip"
