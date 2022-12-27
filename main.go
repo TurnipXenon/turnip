@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"log"
 	"os"
@@ -14,7 +15,15 @@ import (
 )
 
 func main() {
+	flags := models.RunFlags{}
+
 	// override with environment
+	flags.PostgresConnection = os.Getenv("PGCONN")
+	if flags.PostgresConnection == "" {
+		// local setup
+		flags.PostgresConnection = "postgresql://turnipservice:password@localhost:5432/turnip"
+	}
+
 	default_port_str := os.Getenv("PORT")
 	var port int
 	if default_port_str == "" {
@@ -25,7 +34,6 @@ func main() {
 	}
 
 	// parse flags
-	flags := models.RunFlags{}
 	flag.IntVar(&flags.Port, "port", port, "port number to serve the turnip")
 	flag.BoolVar(&flags.IsLocal, "is-local", true, "determines whether to use local services or not")
 	flag.Parse()
@@ -38,8 +46,9 @@ func main() {
 	}
 
 	// todo: set up connections to other services like db
-	// ctx := context.Background()
-	s := server.InitializeServer(flags)
+	ctx := context.Background()
+	s := server.InitializeServer(ctx, flags)
+	defer s.Cleanup(ctx)
 
 	// run serve mux or router
 	api.RunServeMux(s, flags)
