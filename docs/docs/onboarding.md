@@ -36,6 +36,7 @@ If no port argument was given, we default to port 8000.
 **todo: postgres onboarding**
 
 logs:
+
 ```
 postgres=# CREATE DATABASE turnip
 postgres-# \connect turnip
@@ -60,6 +61,11 @@ Press any key to
 ```
 
 Need this one too: `GRANT postgres to turnipservice;`
+
+YOU GOTTA SHARE THE FACT YOUVE BEEN TROUBLESHOOTING FOR TWO HOURS when DigitalOcean was apparently giving you the wrong
+IP address. or maybe something is up with my browser. then again, some rando website https://whatismyipaddress.com/ found my ip correctly.
+DBMS: PostgreSQL (ver. 12.0)Case sensitivity: plain=mixed, delimited=exact The connection attempt failed.
+
 
 ## MKDocs
 
