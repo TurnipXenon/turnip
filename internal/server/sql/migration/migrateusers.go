@@ -1,7 +1,7 @@
 package migration
 
 const (
-	MigrateUsers0001 = `create table public."User"
+	MigrateUsers0001 = `create table "User"
 (
     primary_id      uuid not null
         constraint "User_pk"
@@ -13,9 +13,6 @@ const (
     access_groups   text[]
 );
 
-alter table public."User"
-    owner to postgres;
-
 create unique index "User_username_index"
-    on public."User" (username);`
+    on "User" (username);`
 )
