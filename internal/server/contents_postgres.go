@@ -43,7 +43,7 @@ func (c contentsPostgresImpl) DeleteContentById(ctx context.Context, primary str
 	panic("implement me")
 }
 
-func NewContentsPostgres(d *clients.PostgresDb) Contents {
+func NewContentsPostgres(ctx context.Context, d *clients.PostgresDb) Contents {
 	// primary: primary id
 	// sort: created at
 	t := contentsPostgresImpl{

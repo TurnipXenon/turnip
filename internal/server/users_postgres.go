@@ -4,29 +4,29 @@ package server
 
 import (
 	"context"
-	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5"
 	"log"
 
-	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 
 	"github.com/TurnipXenon/turnip/internal/clients"
 	"github.com/TurnipXenon/turnip/internal/server/sql/migration"
 	"github.com/TurnipXenon/turnip/internal/util"
 )
 
-const (
-	ifUserTableExists = `SELECT EXISTS(
-               SELECT
-               FROM information_schema.tables
-               WHERE table_schema = 'public'
-                 AND table_name = 'User'
-           );`
-)
-
 type usersPostgresImpl struct {
-	db           *clients.PostgresDb
-	ddbTableName *string
+	db          *clients.PostgresDb
+	dbTableName string
+}
+
+func (u *usersPostgresImpl) GetTableName() string {
+	return u.dbTableName
+}
+
+func (u *usersPostgresImpl) GetMigrationSequence() []migration.Migration {
+	return []migration.Migration{
+		migration.NewGenericMigration(migration.MigrateUsers0001),
+	}
 }
 
 func (u *usersPostgresImpl) CreateUser(ctx context.Context, ud *User) error {
@@ -88,26 +88,16 @@ func (u *usersPostgresImpl) GetUser(ctx context.Context, s *User) (*User, error)
 }
 
 func NewUsersPostgres(ctx context.Context, d *clients.PostgresDb) Users {
-	s := usersPostgresImpl{
-		db:           d,
-		ddbTableName: aws.String("Users"),
+	p := usersPostgresImpl{
+		db:          d,
+		dbTableName: "User",
 	}
 
-	rows := s.db.Pool.QueryRow(ctx, ifUserTableExists)
-	var exists bool
-	err := rows.Scan(&exists)
-	if err != nil {
-		util.LogDetailedError(err)
-		log.Fatalf("failed to check if table exists: %v", err)
-	}
-	if !exists {
-		// from RocketDonkey @ https://stackoverflow.com/a/14668907/17836168
-		s.migrateUsers(ctx)
-	}
+	clients.SetupTable(ctx, d, &p)
 
-	// todo: detect schema change
+	// todo(turnip): detect schema change
 
-	return &s
+	return &p
 }
 
 func (u *usersPostgresImpl) migrateUsers(ctx context.Context) {

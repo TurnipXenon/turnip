@@ -50,25 +50,5 @@ func (s *storageDynamodDBImpl) GetHostMap() map[string]models.Host {
 		}
 	}
 
-	// todo: sample how to get object dynamodb
-	//fmt.Println("Entering here")
-	//input := &dynamodb.GetItemInput{
-	//	TableName: aws.String(table),
-	//	Key: map[string]*dynamodb.AttributeValue{
-	//		"hostCode": {S: aws.String("turnip")},
-	//	},
-	//}
-	//
-	//fmt.Println("Entering here")
-	//item, err := ddb.GetItem(input)
-	//fmt.Println("Entering here!!!!")
-	//if err != nil {
-	//	print("Sad :(", err.Error())
-	//	return nil
-	//} else {
-	//	fmt.Println("Wah wah wah")
-	//	fmt.Println(item.Item)
-	//}
-
 	return hostMap
 }
