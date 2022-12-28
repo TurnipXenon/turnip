@@ -35,6 +35,9 @@ require (
 	github.com/aws/smithy-go v1.13.5 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20200714003250-2b9c44734f2b // indirect
+	github.com/jackc/puddle/v2 v2.1.2 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
+	go.uber.org/atomic v1.10.0 // indirect
+	golang.org/x/sync v0.0.0-20220923202941-7f9b1623fab7 // indirect
 	golang.org/x/text v0.3.8 // indirect
 )

@@ -49,7 +49,7 @@ func (h turnipHandler) CreateUser(ctx context.Context, request *turnip.CreateUse
 
 func (h turnipHandler) Login(ctx context.Context, request *turnip.LoginRequest) (*turnip.LoginResponse, error) {
 	// based on https://www.vultr.com/docs/implement-tokenbased-authentication-with-golang-and-mysql-8-server/
-	user, err := h.server.Users.GetUser(&server.User{
+	user, err := h.server.Users.GetUser(ctx, &server.User{
 		Username: request.Username,
 	})
 
