@@ -30,7 +30,7 @@ func NewUsersDynamoDB(d *dynamodb.Client) Users {
 }
 
 // GetUser may return nil
-func (u *usersDynamoDBImpl) GetUser(ud *User) (*User, error) {
+func (u *usersDynamoDBImpl) GetUser(_ context.Context, ud *User) (*User, error) {
 	ctx, cancel := context.WithTimeout(context.TODO(), ddbTimeout)
 	defer cancel()
 
@@ -59,7 +59,7 @@ func (u *usersDynamoDBImpl) GetUser(ud *User) (*User, error) {
 
 func (u *usersDynamoDBImpl) CreateUser(ctx context.Context, ud *User) error {
 	// check if migration already exists
-	item, err := u.GetUser(ud)
+	item, err := u.GetUser(ctx, ud)
 	if err != nil {
 		util.LogDetailedError(err)
 		return util.WrapErrorWithDetails(err)

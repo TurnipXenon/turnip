@@ -31,15 +31,15 @@ type usersPostgresImpl struct {
 
 func (u *usersPostgresImpl) CreateUser(ctx context.Context, ud *User) error {
 	// check if user already exists
-	rows, _ := u.db.Conn.Query(
+	rows := u.db.Pool.QueryRow(
 		ctx,
 		`SELECT EXISTS(
     			SELECT username FROM public."User" WHERE username=$1
            )`,
 		ud.Username,
 	)
-	defer rows.Close()
-	exists, err := pgx.CollectOneRow(rows, pgx.RowTo[bool])
+	var exists bool
+	err := rows.Scan(&exists)
 	if err != nil {
 		util.LogDetailedError(err)
 		return util.WrapErrorWithDetails(err)
@@ -47,9 +47,8 @@ func (u *usersPostgresImpl) CreateUser(ctx context.Context, ud *User) error {
 	if exists {
 		return util.WrapErrorWithDetails(UserAlreadyExists)
 	}
-	rows.Close()
 
-	_, err = u.db.Conn.Exec(
+	_, err = u.db.Pool.Exec(
 		ctx,
 		`INSERT INTO public."User" 
     			(primary_id, username, hashed_password, access_groups) 
@@ -68,9 +67,24 @@ func (u *usersPostgresImpl) CreateUser(ctx context.Context, ud *User) error {
 	return nil
 }
 
-func (u *usersPostgresImpl) GetUser(s *User) (*User, error) {
-	//TODO implement me
-	panic("implement me")
+func (u *usersPostgresImpl) GetUser(ctx context.Context, s *User) (*User, error) {
+	// todo: figure out access group list
+	row := u.db.Pool.QueryRow(
+		ctx,
+		`SELECT username FROM public."User" WHERE username=$1`,
+		s.Username,
+	)
+	newUser := User{}
+	err := row.Scan(&newUser.Username)
+	if err == pgx.ErrNoRows {
+		return nil, nil
+	}
+	if err != nil {
+		util.LogDetailedError(err)
+		return nil, util.WrapErrorWithDetails(err)
+	}
+
+	return &newUser, nil
 }
 
 func NewUsersPostgres(ctx context.Context, d *clients.PostgresDb) Users {
@@ -79,14 +93,14 @@ func NewUsersPostgres(ctx context.Context, d *clients.PostgresDb) Users {
 		ddbTableName: aws.String("Users"),
 	}
 
-	rows, _ := s.db.Conn.Query(ctx, ifUserTableExists)
-	defer rows.Close()
-	exists, err := pgx.CollectOneRow(rows, pgx.RowTo[bool])
+	rows := s.db.Pool.QueryRow(ctx, ifUserTableExists)
+	var exists bool
+	err := rows.Scan(&exists)
 	if err != nil {
 		util.LogDetailedError(err)
 		log.Fatalf("failed to check if table exists: %v", err)
 	}
-	if err != nil || !exists {
+	if !exists {
 		// from RocketDonkey @ https://stackoverflow.com/a/14668907/17836168
 		s.migrateUsers(ctx)
 	}
@@ -97,7 +111,7 @@ func NewUsersPostgres(ctx context.Context, d *clients.PostgresDb) Users {
 }
 
 func (u *usersPostgresImpl) migrateUsers(ctx context.Context) {
-	_, err := u.db.Conn.Exec(ctx, migration.MigrateUsers0001)
+	_, err := u.db.Pool.Exec(ctx, migration.MigrateUsers0001)
 	if err != nil {
 		util.LogDetailedError(err)
 		log.Fatal(err)
