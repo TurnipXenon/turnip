@@ -23,7 +23,7 @@ type User struct {
 
 type Users interface {
 	CreateUser(ctx context.Context, ud *User) error
-	GetUser(s *User) (*User, error)
+	GetUser(ctx context.Context, ud *User) (*User, error)
 }
 
 func FromUserRequestToUserData(from *turnip.CreateUserRequest) (User, error) {
