@@ -3,10 +3,10 @@ package migration
 const (
 	MigrateToken0001 = `create table "Token"
 (
-    access_token uuid not null
+    access_token uuid        not null
         constraint "Token_pk"
             primary key,
-    username     text not null
+    username     varchar(50) not null
         constraint "Token_User_username_fk"
             references "User" (username),
     created_at   timestamp,
