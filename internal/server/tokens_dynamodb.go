@@ -4,16 +4,15 @@ package server
 
 import (
 	"context"
-	"crypto/rand"
-	"encoding/hex"
-	"fmt"
-	"github.com/TurnipXenon/turnip_api/rpc/turnip"
-	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/expression"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
+	"github.com/google/uuid"
+
+	"github.com/TurnipXenon/turnip_api/rpc/turnip"
 
 	"github.com/TurnipXenon/turnip/internal/util"
 )
@@ -69,11 +68,7 @@ func (t *tokensDynamoDBImpl) GetOrCreateTokenByUsername(ctx context.Context, ud 
 
 	// (2) if token does not exist
 	token.Username = ud.Username
-	token.AccessToken, err = generateSecureToken(40)
-	if err != nil {
-		util.LogDetailedError(err)
-		return nil, err
-	}
+	token.AccessToken = uuid.New().String()
 
 	//dt := time.Now()
 	//token.GeneratedAt = dt.Format(time.RFC3339)
@@ -94,17 +89,7 @@ func (t *tokensDynamoDBImpl) GetOrCreateTokenByUsername(ctx context.Context, ud 
 	return &token, err
 }
 
-func generateSecureToken(length int) (string, error) {
-	// from Andzej Maciusovic @ https://stackoverflow.com/a/59457748/17836168
-	b := make([]byte, length)
-	if _, err := rand.Read(b); err != nil {
-		fmt.Printf("generateSecureToken: Error: %s\n", err.Error())
-		return "", err
-	}
-	return hex.EncodeToString(b), nil
-}
-
-func (t *tokensDynamoDBImpl) GetToken(accessToken string) (*turnip.Token, error) {
+func (t *tokensDynamoDBImpl) GetToken(ctx context.Context, accessToken string) (*turnip.Token, error) {
 	// todo: how do we make this inline with twirp generated server stubs?
 	ctx, cancel := context.WithTimeout(context.TODO(), ddbTimeout)
 	defer cancel()

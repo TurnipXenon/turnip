@@ -4,14 +4,17 @@ package server
 
 import (
 	"context"
-	"log"
-
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 
 	"github.com/TurnipXenon/turnip/internal/clients"
 	"github.com/TurnipXenon/turnip/internal/server/sql/migration"
 	"github.com/TurnipXenon/turnip/internal/util"
+)
+
+const (
+	// todo:  note!!!
+	usernameCharLimit = 50
 )
 
 type usersPostgresImpl struct {
@@ -71,11 +74,11 @@ func (u *usersPostgresImpl) GetUser(ctx context.Context, s *User) (*User, error)
 	// todo: figure out access group list
 	row := u.db.Pool.QueryRow(
 		ctx,
-		`SELECT username FROM public."User" WHERE username=$1`,
+		`SELECT username, hashed_password FROM public."User" WHERE username=$1`,
 		s.Username,
 	)
 	newUser := User{}
-	err := row.Scan(&newUser.Username)
+	err := row.Scan(&newUser.Username, &newUser.HashedPassword)
 	if err == pgx.ErrNoRows {
 		return nil, nil
 	}
@@ -98,12 +101,4 @@ func NewUsersPostgres(ctx context.Context, d *clients.PostgresDb) Users {
 	// todo(turnip): detect schema change
 
 	return &p
-}
-
-func (u *usersPostgresImpl) migrateUsers(ctx context.Context) {
-	_, err := u.db.Pool.Exec(ctx, migration.MigrateUsers0001)
-	if err != nil {
-		util.LogDetailedError(err)
-		log.Fatal(err)
-	}
 }

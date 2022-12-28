@@ -71,12 +71,7 @@ func (h turnipHandler) Login(ctx context.Context, request *turnip.LoginRequest) 
 	}
 
 	return &turnip.LoginResponse{
-		Token: &turnip.Token{
-			AccessToken: token.AccessToken,
-			Username:    token.Username,
-			CreatedAt:   nil,
-			ExpiresAt:   nil,
-		},
+		Token: token,
 		User: &turnip.User{
 			Username: user.Username,
 		},
@@ -89,7 +84,7 @@ func (h turnipHandler) IsAuthenticated(ctx context.Context) (*turnip.Token, erro
 		return nil, twirp.Unauthenticated.Error("unauthorized access; try adding a Authorization: Token header")
 	}
 
-	token, err := h.server.Tokens.GetToken(accessToken.(string))
+	token, err := h.server.Tokens.GetToken(ctx, accessToken.(string))
 	if err != nil {
 		return nil, twirp.InternalErrorWith(err)
 	}
