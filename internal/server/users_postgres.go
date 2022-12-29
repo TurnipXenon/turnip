@@ -74,11 +74,11 @@ func (u *usersPostgresImpl) GetUser(ctx context.Context, s *User) (*User, error)
 	// todo: figure out access group list
 	row := u.db.Pool.QueryRow(
 		ctx,
-		`SELECT username, hashed_password FROM public."User" WHERE username=$1`,
+		`SELECT username, hashed_password, primary_id FROM "User" WHERE username=$1`,
 		s.Username,
 	)
 	newUser := User{}
-	err := row.Scan(&newUser.Username, &newUser.HashedPassword)
+	err := row.Scan(&newUser.Username, &newUser.HashedPassword, &newUser.PrimaryId)
 	if err == pgx.ErrNoRows {
 		return nil, nil
 	}

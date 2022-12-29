@@ -88,7 +88,7 @@ func (t *tokensPostgresImpl) GetToken(ctx context.Context, accessToken string) (
 FROM "Token" t
 WHERE access_token=$1
 LIMIT 1`, accessToken) // todo  get accessToken by access accessToken
-	err := row.Scan(&token.AccessToken, &token.Username, createdAt, expiresAt)
+	err := row.Scan(&token.AccessToken, &token.Username, &createdAt, &expiresAt)
 	if err == pgx.ErrNoRows {
 		// unauthorized or no token
 		return nil, nil

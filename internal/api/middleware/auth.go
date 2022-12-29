@@ -22,7 +22,7 @@ type AuthMiddleware struct {
 func (m *AuthMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// form https://twitchtv.github.io/twirp/docs/headers.html#read-http-headers-from-requests
 	// tonkla @ https://stackoverflow.com/a/59071145/
-	const TOKEN_SCHEMA = "Token  "
+	const TOKEN_SCHEMA = "Token "
 	ctx := r.Context()
 	authHeader := r.Header.Get("Authorization")
 	if strings.Contains(authHeader, TOKEN_SCHEMA) {
