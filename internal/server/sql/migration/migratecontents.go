@@ -16,8 +16,5 @@ const (
     author_id      uuid
         constraint "Content_User_primary_id_fk"
             references "User"
-);
-
-alter table "Content"
-    owner to postgres;`
+);`
 )
