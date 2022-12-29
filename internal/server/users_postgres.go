@@ -6,9 +6,6 @@ import (
 	"context"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
-	"log"
-
-	"github.com/aws/aws-sdk-go-v2/aws"
 
 	"github.com/TurnipXenon/turnip/internal/clients"
 	"github.com/TurnipXenon/turnip/internal/server/sql/migration"
@@ -16,17 +13,23 @@ import (
 )
 
 const (
-	ifUserTableExists = `SELECT EXISTS(
-               SELECT
-               FROM information_schema.tables
-               WHERE table_schema = 'public'
-                 AND table_name = 'User'
-           );`
+	// todo:  note!!!
+	usernameCharLimit = 50
 )
 
 type usersPostgresImpl struct {
-	db           *clients.PostgresDb
-	ddbTableName *string
+	db          *clients.PostgresDb
+	dbTableName string
+}
+
+func (u *usersPostgresImpl) GetTableName() string {
+	return u.dbTableName
+}
+
+func (u *usersPostgresImpl) GetMigrationSequence() []migration.Migration {
+	return []migration.Migration{
+		migration.NewGenericMigration(migration.MigrateUsers0001),
+	}
 }
 
 func (u *usersPostgresImpl) CreateUser(ctx context.Context, ud *User) error {
@@ -71,11 +74,11 @@ func (u *usersPostgresImpl) GetUser(ctx context.Context, s *User) (*User, error)
 	// todo: figure out access group list
 	row := u.db.Pool.QueryRow(
 		ctx,
-		`SELECT username FROM public."User" WHERE username=$1`,
+		`SELECT username, hashed_password, primary_id FROM "User" WHERE username=$1`,
 		s.Username,
 	)
 	newUser := User{}
-	err := row.Scan(&newUser.Username)
+	err := row.Scan(&newUser.Username, &newUser.HashedPassword, &newUser.PrimaryId)
 	if err == pgx.ErrNoRows {
 		return nil, nil
 	}
@@ -88,32 +91,14 @@ func (u *usersPostgresImpl) GetUser(ctx context.Context, s *User) (*User, error)
 }
 
 func NewUsersPostgres(ctx context.Context, d *clients.PostgresDb) Users {
-	s := usersPostgresImpl{
-		db:           d,
-		ddbTableName: aws.String("Users"),
+	p := usersPostgresImpl{
+		db:          d,
+		dbTableName: "User",
 	}
 
-	rows := s.db.Pool.QueryRow(ctx, ifUserTableExists)
-	var exists bool
-	err := rows.Scan(&exists)
-	if err != nil {
-		util.LogDetailedError(err)
-		log.Fatalf("failed to check if table exists: %v", err)
-	}
-	if !exists {
-		// from RocketDonkey @ https://stackoverflow.com/a/14668907/17836168
-		s.migrateUsers(ctx)
-	}
+	clients.SetupTable(ctx, d, &p)
 
-	// todo: detect schema change
+	// todo(turnip): detect schema change
 
-	return &s
-}
-
-func (u *usersPostgresImpl) migrateUsers(ctx context.Context) {
-	_, err := u.db.Pool.Exec(ctx, migration.MigrateUsers0001)
-	if err != nil {
-		util.LogDetailedError(err)
-		log.Fatal(err)
-	}
+	return &p
 }

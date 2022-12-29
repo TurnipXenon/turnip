@@ -8,7 +8,7 @@ import (
 )
 
 type Contents interface {
-	CreateContent(ctx context.Context, request *turnip.CreateContentRequest) (*turnip.Content, error)
+	CreateContent(ctx context.Context, request *turnip.CreateContentRequest, user *turnip.User) (*turnip.Content, error)
 	GetContentById(ctx context.Context, primary string) (*turnip.Content, error)
 	GetAllContent(ctx context.Context) ([]*turnip.Content, error)
 	GetContentByTag(ctx context.Context, tag string) ([]*turnip.Content, error)
@@ -16,4 +16,6 @@ type Contents interface {
 	// UpdateContent returns old version
 	UpdateContent(ctx context.Context, new *turnip.Content) (*turnip.Content, error)
 	DeleteContentById(ctx context.Context, primary string) (*turnip.Content, error)
+
+	// todo: batch get?
 }

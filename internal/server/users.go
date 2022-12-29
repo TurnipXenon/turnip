@@ -16,13 +16,15 @@ var (
 )
 
 type User struct {
-	Username        string
+	turnip.User
 	HashedPassword  string
 	AccessGroupList []string
 }
 
 type Users interface {
 	CreateUser(ctx context.Context, ud *User) error
+
+	// GetUser gets user based on their username
 	GetUser(ctx context.Context, ud *User) (*User, error)
 }
 
@@ -33,7 +35,7 @@ func FromUserRequestToUserData(from *turnip.CreateUserRequest) (User, error) {
 	}
 
 	return User{
-		Username:        from.Username,
+		User:            turnip.User{Username: from.Username},
 		HashedPassword:  string(password),
 		AccessGroupList: []string{},
 	}, nil

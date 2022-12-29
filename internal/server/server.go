@@ -33,9 +33,9 @@ func InitializeServer(ctx context.Context, flags models.RunFlags) *Server {
 	// todo
 	s.Users = NewUsersPostgres(ctx, s.db)
 	// todo(turnip)
-	s.Tokens = NewTokensPostgres(s.db)
+	s.Tokens = NewTokensPostgres(ctx, s.db)
 	// todo(turnip)
-	s.Contents = NewContentsPostgres(s.db)
+	s.Contents = NewContentsPostgres(ctx, s.db)
 	// endregion db
 
 	return &s

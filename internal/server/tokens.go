@@ -10,5 +10,5 @@ import (
 
 type Tokens interface {
 	GetOrCreateTokenByUsername(ctx context.Context, ud *User) (*turnip.Token, error)
-	GetToken(token string) (*turnip.Token, error)
+	GetToken(ctx context.Context, accessToken string) (*turnip.Token, error)
 }
