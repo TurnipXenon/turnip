@@ -13,9 +13,6 @@ const (
     access_groups   text[]
 );
 
-alter table "User"
-    owner to postgres;
-
 create unique index "User_username_index"
     on "User" (username);`
 )

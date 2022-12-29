@@ -14,7 +14,5 @@ const (
 );
 
 create index "Token_username_index"
-    on "Token" (username);
-
-`
+    on "Token" (username);`
 )
