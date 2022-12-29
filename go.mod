@@ -3,7 +3,7 @@ module github.com/TurnipXenon/turnip
 go 1.18
 
 require (
-	github.com/TurnipXenon/turnip_api v0.0.0-20221225041926-5947bb2a63fa
+	github.com/TurnipXenon/turnip_api v0.0.0-20221229170115-1430120f2347
 	github.com/aws/aws-sdk-go-v2 v1.17.3
 	github.com/aws/aws-sdk-go-v2/config v1.18.7
 	github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue v1.10.8

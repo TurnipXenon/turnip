@@ -30,7 +30,7 @@ func NewContentsDynamoDB(d *dynamodb.Client) Contents {
 	return &t
 }
 
-func (c contentsDynamoDBImpl) CreateContent(ctx context.Context, request *turnip.CreateContentRequest) (*turnip.Content, error) {
+func (c contentsDynamoDBImpl) CreateContent(ctx context.Context, request *turnip.CreateContentRequest, user *turnip.User) (*turnip.Content, error) {
 	//TODO implement me
 
 	// create uuid

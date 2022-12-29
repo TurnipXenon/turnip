@@ -50,7 +50,7 @@ func (h turnipHandler) CreateUser(ctx context.Context, request *turnip.CreateUse
 func (h turnipHandler) Login(ctx context.Context, request *turnip.LoginRequest) (*turnip.LoginResponse, error) {
 	// based on https://www.vultr.com/docs/implement-tokenbased-authentication-with-golang-and-mysql-8-server/
 	user, err := h.server.Users.GetUser(ctx, &server.User{
-		Username: request.Username,
+		User: turnip.User{Username: request.Username},
 	})
 
 	if user == nil {
@@ -78,7 +78,7 @@ func (h turnipHandler) Login(ctx context.Context, request *turnip.LoginRequest) 
 	}, nil
 }
 
-func (h turnipHandler) IsAuthenticated(ctx context.Context) (*turnip.Token, error) {
+func (h turnipHandler) IsAuthenticated(ctx context.Context) (*turnip.User, twirp.Error) {
 	accessToken := ctx.Value(middleware.AccessTokenKey)
 	if accessToken == nil {
 		return nil, twirp.Unauthenticated.Error("unauthorized access; try adding a Authorization: Token header")
@@ -86,21 +86,37 @@ func (h turnipHandler) IsAuthenticated(ctx context.Context) (*turnip.Token, erro
 
 	token, err := h.server.Tokens.GetToken(ctx, accessToken.(string))
 	if err != nil {
+		util.LogDetailedError(err)
 		return nil, twirp.InternalErrorWith(err)
 	}
-	if token != nil {
+	if token == nil {
 		return nil, twirp.Unauthenticated.Error("unauthorized access")
 	}
-	return token, nil
+
+	user, err := h.server.Users.GetUser(
+		ctx,
+		&server.User{
+			User: turnip.User{Username: token.Username}, // struct embedding
+		},
+	)
+	if err != nil {
+		util.LogDetailedError(err)
+		return nil, twirp.InternalErrorWith(err)
+	}
+
+	return &turnip.User{
+		PrimaryId: user.PrimaryId,
+		Username:  user.Username,
+	}, nil
 }
 
 func (h turnipHandler) CreateContent(ctx context.Context, request *turnip.CreateContentRequest) (*turnip.CreateContentResponse, error) {
-	token, err := h.IsAuthenticated(ctx)
-	if token != nil {
-		return nil, err
+	user, twerr := h.IsAuthenticated(ctx)
+	if user == nil {
+		return nil, twerr
 	}
 
-	content, err := h.server.Contents.CreateContent(ctx, request)
+	content, err := h.server.Contents.CreateContent(ctx, request, user)
 	if err != nil {
 		return nil, twirp.InternalError("internal server error; try again later")
 	}
@@ -117,5 +133,5 @@ func (h turnipHandler) CreateContent(ctx context.Context, request *turnip.Create
 		Meta:          content.Meta,
 		PrimaryId:     content.PrimaryId,
 		CreatedAt:     content.CreatedAt,
-	}, twirp.Unimplemented.Error("CreateContent")
+	}, nil
 }
