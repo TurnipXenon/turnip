@@ -1,6 +1,6 @@
 // storage is an abstraction to s3 buckets
 
-package server
+package storage
 
 import (
 	"context"
@@ -13,13 +13,12 @@ import (
 
 	"github.com/TurnipXenon/turnip_api/rpc/turnip"
 
-	"github.com/TurnipXenon/turnip/internal/clients"
-	"github.com/TurnipXenon/turnip/internal/server/sql/migration"
+	"github.com/TurnipXenon/turnip/internal/storage/migration"
 	"github.com/TurnipXenon/turnip/internal/util"
 )
 
 type tokensPostgresImpl struct {
-	db          *clients.PostgresDb
+	db          *PostgresDb
 	dbTableName string
 	// todo: global secondary index
 }
@@ -108,13 +107,13 @@ LIMIT 1`, accessToken) // todo  get accessToken by access accessToken
 	return &token, nil
 }
 
-func NewTokensPostgres(ctx context.Context, d *clients.PostgresDb) Tokens {
+func NewTokensPostgres(ctx context.Context, d *PostgresDb) Tokens {
 	t := tokensPostgresImpl{
 		db:          d,
 		dbTableName: "Token",
 	}
 
-	clients.SetupTable(ctx, d, &t)
+	SetupTable(ctx, d, &t)
 
 	return &t
 }

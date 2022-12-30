@@ -1,4 +1,4 @@
-package server
+package storage
 
 import (
 	"context"
@@ -10,13 +10,12 @@ import (
 
 	"github.com/TurnipXenon/turnip_api/rpc/turnip"
 
-	"github.com/TurnipXenon/turnip/internal/clients"
-	"github.com/TurnipXenon/turnip/internal/server/sql/migration"
+	"github.com/TurnipXenon/turnip/internal/storage/migration"
 	"github.com/TurnipXenon/turnip/internal/util"
 )
 
 type contentsPostgresImpl struct {
-	db        *clients.PostgresDb
+	db        *PostgresDb
 	tableName string
 	// todo: global secondary index
 }
@@ -100,7 +99,7 @@ func (c *contentsPostgresImpl) DeleteContentById(ctx context.Context, primary st
 	panic("implement me")
 }
 
-func NewContentsPostgres(ctx context.Context, d *clients.PostgresDb) Contents {
+func NewContentsPostgres(ctx context.Context, d *PostgresDb) Contents {
 	// primary: primary id
 	// sort: created at
 	t := contentsPostgresImpl{
@@ -108,7 +107,7 @@ func NewContentsPostgres(ctx context.Context, d *clients.PostgresDb) Contents {
 		tableName: "Content",
 	}
 
-	clients.SetupTable(ctx, d, &t)
+	SetupTable(ctx, d, &t)
 
 	return &t
 }
