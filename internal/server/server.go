@@ -2,10 +2,13 @@ package server
 
 import (
 	"context"
-	"github.com/TurnipXenon/turnip/internal/storage"
+	"fmt"
 	"log"
 
+	"github.com/TurnipXenon/turnip/internal/config"
 	"github.com/TurnipXenon/turnip/internal/models"
+	"github.com/TurnipXenon/turnip/internal/storage"
+	"github.com/TurnipXenon/turnip/internal/util"
 )
 
 type Server struct {
@@ -14,14 +17,28 @@ type Server struct {
 	Tokens   storage.Tokens
 	Contents storage.Contents
 	db       *storage.PostgresDb
+	Metadata storage.Metadata
 }
 
 // InitializeServer remember to defer cleanup!
 func InitializeServer(ctx context.Context, flags models.RunFlags) *Server {
 	s := Server{}
+	s.db = storage.NewPostgresDatabase(ctx, flags)
+
+	// region to be extracted
+
+	// todo: extract this!
+	s.Metadata = storage.NewMetadataPostgres(ctx, s.db)
+	canUserBeMade, err := s.Metadata.CanUsersBeMade(ctx)
+	if err != nil {
+		util.LogDetailedError(err)
+		fmt.Println("Will try to close CreateUser endpoint as a result")
+	}
+
+	sysConf := config.SystemConfig{CanUserBeMade: config.NewGenericSystemVariable[bool](canUserBeMade)}
+	// endregion to be extracted
 
 	// region db
-	s.db = storage.NewPostgresDatabase(ctx, flags)
 
 	if flags.IsLocal {
 		s.Storage = storage.NewStorageLocal()
@@ -31,7 +48,7 @@ func InitializeServer(ctx context.Context, flags models.RunFlags) *Server {
 	}
 
 	// todo
-	s.Users = storage.NewUsersPostgres(ctx, s.db)
+	s.Users = storage.NewUsersPostgres(ctx, s.db, sysConf)
 	// todo(turnip)
 	s.Tokens = storage.NewTokensPostgres(ctx, s.db)
 	// todo(turnip)
