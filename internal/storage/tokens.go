@@ -1,6 +1,6 @@
 // storage is an abstraction to s3 buckets
 
-package server
+package storage
 
 import (
 	"context"

@@ -9,7 +9,6 @@ import (
 
 	"github.com/joho/godotenv"
 
-	"github.com/TurnipXenon/turnip/internal/api"
 	"github.com/TurnipXenon/turnip/internal/models"
 	"github.com/TurnipXenon/turnip/internal/server"
 )
@@ -51,5 +50,5 @@ func main() {
 	defer s.Cleanup(ctx)
 
 	// run serve mux or router
-	api.RunServeMux(s, flags)
+	server.RunServeMux(s, flags)
 }

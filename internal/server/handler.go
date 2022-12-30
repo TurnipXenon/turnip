@@ -1,24 +1,23 @@
-package turnip
+package server
 
 import (
 	"context"
 	"errors"
-	"github.com/TurnipXenon/turnip/internal/api/middleware"
+	"github.com/TurnipXenon/turnip/internal/storage"
 
 	"github.com/twitchtv/twirp"
 	"golang.org/x/crypto/bcrypt"
 
 	"github.com/TurnipXenon/turnip_api/rpc/turnip"
 
-	"github.com/TurnipXenon/turnip/internal/server"
 	"github.com/TurnipXenon/turnip/internal/util"
 )
 
 type turnipHandler struct {
-	server *server.Server
+	server *Server
 }
 
-func NewTurnipHandler(s *server.Server) turnip.Turnip {
+func NewTurnipHandler(s *Server) turnip.Turnip {
 	return &turnipHandler{
 		s,
 	}
@@ -27,7 +26,7 @@ func NewTurnipHandler(s *server.Server) turnip.Turnip {
 func (h turnipHandler) CreateUser(ctx context.Context, request *turnip.CreateUserRequest) (*turnip.CreateUserResponse, error) {
 	// todo: add ability to turn off this endpoint
 
-	userData, err := server.FromUserRequestToUserData(request)
+	userData, err := storage.FromUserRequestToUserData(request)
 
 	if err != nil {
 		util.LogDetailedError(err)
@@ -36,7 +35,7 @@ func (h turnipHandler) CreateUser(ctx context.Context, request *turnip.CreateUse
 
 	err = h.server.Users.CreateUser(ctx, &userData)
 	if err != nil {
-		if errors.Unwrap(err) == server.UserAlreadyExists {
+		if errors.Unwrap(err) == storage.UserAlreadyExists {
 			return nil, twirp.AlreadyExists.Error("username already exists")
 		}
 
@@ -49,7 +48,7 @@ func (h turnipHandler) CreateUser(ctx context.Context, request *turnip.CreateUse
 
 func (h turnipHandler) Login(ctx context.Context, request *turnip.LoginRequest) (*turnip.LoginResponse, error) {
 	// based on https://www.vultr.com/docs/implement-tokenbased-authentication-with-golang-and-mysql-8-server/
-	user, err := h.server.Users.GetUser(ctx, &server.User{
+	user, err := h.server.Users.GetUser(ctx, &storage.User{
 		User: turnip.User{Username: request.Username},
 	})
 
@@ -79,7 +78,7 @@ func (h turnipHandler) Login(ctx context.Context, request *turnip.LoginRequest) 
 }
 
 func (h turnipHandler) IsAuthenticated(ctx context.Context) (*turnip.User, twirp.Error) {
-	accessToken := ctx.Value(middleware.AccessTokenKey)
+	accessToken := ctx.Value(AccessTokenKey)
 	if accessToken == nil {
 		return nil, twirp.Unauthenticated.Error("unauthorized access; try adding a Authorization: Token header")
 	}
@@ -95,7 +94,7 @@ func (h turnipHandler) IsAuthenticated(ctx context.Context) (*turnip.User, twirp
 
 	user, err := h.server.Users.GetUser(
 		ctx,
-		&server.User{
+		&storage.User{
 			User: turnip.User{Username: token.Username}, // struct embedding
 		},
 	)

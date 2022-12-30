@@ -1,14 +1,13 @@
 // storage is an abstraction to s3 buckets
 
-package server
+package storage
 
 import (
 	"context"
+	migration2 "github.com/TurnipXenon/turnip/internal/storage/migration"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 
-	"github.com/TurnipXenon/turnip/internal/clients"
-	"github.com/TurnipXenon/turnip/internal/server/sql/migration"
 	"github.com/TurnipXenon/turnip/internal/util"
 )
 
@@ -18,7 +17,7 @@ const (
 )
 
 type usersPostgresImpl struct {
-	db          *clients.PostgresDb
+	db          *PostgresDb
 	dbTableName string
 }
 
@@ -26,9 +25,9 @@ func (u *usersPostgresImpl) GetTableName() string {
 	return u.dbTableName
 }
 
-func (u *usersPostgresImpl) GetMigrationSequence() []migration.Migration {
-	return []migration.Migration{
-		migration.NewGenericMigration(migration.MigrateUsers0001),
+func (u *usersPostgresImpl) GetMigrationSequence() []migration2.Migration {
+	return []migration2.Migration{
+		migration2.NewGenericMigration(migration2.MigrateUsers0001),
 	}
 }
 
@@ -90,13 +89,13 @@ func (u *usersPostgresImpl) GetUser(ctx context.Context, s *User) (*User, error)
 	return &newUser, nil
 }
 
-func NewUsersPostgres(ctx context.Context, d *clients.PostgresDb) Users {
+func NewUsersPostgres(ctx context.Context, d *PostgresDb) Users {
 	p := usersPostgresImpl{
 		db:          d,
 		dbTableName: "User",
 	}
 
-	clients.SetupTable(ctx, d, &p)
+	SetupTable(ctx, d, &p)
 
 	// todo(turnip): detect schema change
 
