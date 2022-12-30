@@ -1,8 +1,7 @@
-package api
+package server
 
 import (
 	"fmt"
-	"github.com/TurnipXenon/turnip/internal/api/middleware"
 	"html/template"
 	"log"
 	"net/http"
@@ -14,9 +13,7 @@ import (
 
 	"github.com/TurnipXenon/turnip_api/rpc/turnip"
 
-	turnipImpl "github.com/TurnipXenon/turnip/internal/api/turnip"
 	"github.com/TurnipXenon/turnip/internal/models"
-	turnipserver "github.com/TurnipXenon/turnip/internal/server"
 )
 
 type Mux struct {
@@ -56,17 +53,17 @@ func (m *Mux) serveSingle(pattern string, filename string, Mux *mux.Router) {
 	})
 }
 
-func RunServeMux(s *turnipserver.Server, flags models.RunFlags) {
+func RunServeMux(s *Server, flags models.RunFlags) {
 	//m := Mux{
 	//	HostMap: s.Storage.GetHostMap(),
 	//}
 
 	// setup turnip
-	ti := turnipImpl.NewTurnipHandler(s)
+	ti := NewTurnipHandler(s)
 	twirpHandler := turnip.NewTurnipServer(ti, twirp.WithServerPathPrefix("/api/v1"))
 
 	// grab header details
-	authWrapper := middleware.NewAuthMiddleware(twirpHandler, s)
+	authWrapper := NewAuthMiddleware(twirpHandler, s)
 
 	// todo: we might remove mux later
 	//router := mux.NewRouter()

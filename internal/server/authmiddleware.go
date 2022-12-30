@@ -1,11 +1,9 @@
-package middleware
+package server
 
 import (
 	"context"
 	"net/http"
 	"strings"
-
-	"github.com/TurnipXenon/turnip/internal/server"
 )
 
 // from https://drstearns.github.io/tutorials/gomiddleware/
@@ -16,7 +14,7 @@ const (
 
 type AuthMiddleware struct {
 	handler http.Handler
-	server  *server.Server
+	server  *Server
 }
 
 func (m *AuthMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -32,6 +30,6 @@ func (m *AuthMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	m.handler.ServeHTTP(w, r)
 }
 
-func NewAuthMiddleware(handlerToWrap http.Handler, server *server.Server) *AuthMiddleware {
+func NewAuthMiddleware(handlerToWrap http.Handler, server *Server) *AuthMiddleware {
 	return &AuthMiddleware{handlerToWrap, server}
 }

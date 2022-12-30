@@ -1,14 +1,14 @@
-package clients
+package storage
 
 import (
 	"context"
 	"fmt"
+	"github.com/TurnipXenon/turnip/internal/storage/migration"
 	"log"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/TurnipXenon/turnip/internal/models"
-	"github.com/TurnipXenon/turnip/internal/server/sql/migration"
 	"github.com/TurnipXenon/turnip/internal/util"
 )
 
