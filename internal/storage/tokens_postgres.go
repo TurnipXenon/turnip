@@ -4,7 +4,6 @@ package storage
 
 import (
 	"context"
-	migration2 "github.com/TurnipXenon/turnip/internal/storage/migration"
 	"time"
 
 	"github.com/google/uuid"
@@ -14,6 +13,7 @@ import (
 
 	"github.com/TurnipXenon/turnip_api/rpc/turnip"
 
+	"github.com/TurnipXenon/turnip/internal/storage/migration"
 	"github.com/TurnipXenon/turnip/internal/util"
 )
 
@@ -27,9 +27,9 @@ func (t *tokensPostgresImpl) GetTableName() string {
 	return t.dbTableName
 }
 
-func (t *tokensPostgresImpl) GetMigrationSequence() []migration2.Migration {
-	return []migration2.Migration{
-		migration2.NewGenericMigration(migration2.MigrateToken0001),
+func (t *tokensPostgresImpl) GetMigrationSequence() []migration.Migration {
+	return []migration.Migration{
+		migration.NewGenericMigration(migration.MigrateToken0001),
 	}
 }
 

@@ -1,13 +1,14 @@
-// storage is an abstraction to s3 buckets
-
 package storage
 
 import (
 	"context"
-	migration2 "github.com/TurnipXenon/turnip/internal/storage/migration"
+
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
+	"github.com/twitchtv/twirp"
 
+	"github.com/TurnipXenon/turnip/internal/config"
+	"github.com/TurnipXenon/turnip/internal/storage/migration"
 	"github.com/TurnipXenon/turnip/internal/util"
 )
 
@@ -19,24 +20,29 @@ const (
 type usersPostgresImpl struct {
 	db          *PostgresDb
 	dbTableName string
+	sysConf     config.SystemConfig
 }
 
 func (u *usersPostgresImpl) GetTableName() string {
 	return u.dbTableName
 }
 
-func (u *usersPostgresImpl) GetMigrationSequence() []migration2.Migration {
-	return []migration2.Migration{
-		migration2.NewGenericMigration(migration2.MigrateUsers0001),
+func (u *usersPostgresImpl) GetMigrationSequence() []migration.Migration {
+	return []migration.Migration{
+		migration.NewGenericMigration(migration.MigrateUsers0001),
 	}
 }
 
 func (u *usersPostgresImpl) CreateUser(ctx context.Context, ud *User) error {
+	if !u.sysConf.CanUserBeMade.Get() {
+		return twirp.Unavailable.Error("CreateUser endpoint is unavailable")
+	}
+
 	// check if user already exists
 	rows := u.db.Pool.QueryRow(
 		ctx,
 		`SELECT EXISTS(
-    			SELECT username FROM public."User" WHERE username=$1
+    			SELECT username FROM "User" WHERE username=$1
            )`,
 		ud.Username,
 	)
@@ -52,7 +58,7 @@ func (u *usersPostgresImpl) CreateUser(ctx context.Context, ud *User) error {
 
 	_, err = u.db.Pool.Exec(
 		ctx,
-		`INSERT INTO public."User" 
+		`INSERT INTO "User" 
     			(primary_id, username, hashed_password, access_groups) 
 				VALUES ($1, $2, $3, '{}')`,
 		uuid.New().String(), // todo generate uuid
@@ -89,10 +95,11 @@ func (u *usersPostgresImpl) GetUser(ctx context.Context, s *User) (*User, error)
 	return &newUser, nil
 }
 
-func NewUsersPostgres(ctx context.Context, d *PostgresDb) Users {
+func NewUsersPostgres(ctx context.Context, d *PostgresDb, conf config.SystemConfig) Users {
 	p := usersPostgresImpl{
 		db:          d,
 		dbTableName: "User",
+		sysConf:     conf,
 	}
 
 	SetupTable(ctx, d, &p)
