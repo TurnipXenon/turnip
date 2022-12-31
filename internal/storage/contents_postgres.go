@@ -97,6 +97,8 @@ func pgxByteToStringUuid(initial []byte) (string, error) {
 	return final.String(), nil
 }
 
+// GetContentById returns nil content also with nil error!
+// todo: document behavior
 func (c *contentsPostgresImpl) GetContentById(ctx context.Context, idQuery string) (*turnip.Content, error) {
 	row := c.db.Pool.QueryRow(ctx, `SELECT t.*
                FROM "Content" t
@@ -111,6 +113,9 @@ func (c *contentsPostgresImpl) GetContentById(ctx context.Context, idQuery strin
 	// todo: turn to CollectRow
 	err := row.Scan(&primaryId, &createdAt, &content.Title, &content.Description, &content.Content,
 		&content.TagList, &accessDetails, &meta, &authorId)
+	if err == pgx.ErrNoRows {
+		return nil, nil
+	}
 	if err != nil {
 		util.LogDetailedError(err)
 		return nil, util.WrapErrorWithDetails(err)
@@ -190,6 +195,8 @@ func (c *contentsPostgresImpl) UpdateContent(ctx context.Context, newContent *tu
 		newContent.TagList, accessDetails, meta, newContent.PrimaryId, // 4-7
 	)
 
+	// todo: put NoRowErr check here!
+
 	if err != nil {
 		util.LogDetailedError(err)
 		return nil, util.WrapErrorWithDetails(err)
@@ -198,9 +205,16 @@ func (c *contentsPostgresImpl) UpdateContent(ctx context.Context, newContent *tu
 	return newContent, nil
 }
 
-func (c *contentsPostgresImpl) DeleteContentById(ctx context.Context, primary string) (*turnip.Content, error) {
-	//TODO implement me
-	panic("implement me")
+func (c *contentsPostgresImpl) DeleteContentById(ctx context.Context, primaryId string) (*turnip.Content, error) {
+	_, err := c.db.Pool.Exec(ctx, `DELETE FROM "Content" 
+       WHERE primary_id = $1`, primaryId)
+
+	if err != nil {
+		util.LogDetailedError(err)
+		return nil, util.WrapErrorWithDetails(err)
+	}
+
+	return nil, nil
 }
 
 func NewContentsPostgres(ctx context.Context, d *PostgresDb) Contents {
