@@ -176,9 +176,24 @@ func (h turnipHandler) GetAllContent(ctx context.Context, request *turnip.GetAll
 	panic("implement me")
 }
 
-func (h turnipHandler) PutContent(ctx context.Context, response *turnip.ContentRequestResponse) (*turnip.ContentRequestResponse, error) {
-	//TODO implement me
-	panic("implement me")
+func (h turnipHandler) PutContent(ctx context.Context, request *turnip.ContentRequestResponse) (*turnip.ContentRequestResponse, error) {
+	if request.Item == nil {
+		return nil, twirp.RequiredArgumentError("Item")
+	}
+
+	oldContent, twerr := h.GetContentById(ctx, &turnip.PrimaryIdRequest{PrimaryId: request.Item.PrimaryId})
+	if twerr != nil {
+		util.LogDetailedError(twerr)
+		return nil, twerr
+	}
+
+	_, err := h.server.Contents.UpdateContent(ctx, request.Item)
+	if err != nil {
+		util.LogDetailedError(err)
+		return nil, twirp.InternalErrorWith(err)
+	}
+
+	return &turnip.ContentRequestResponse{Item: oldContent.Item}, nil
 }
 
 func (h turnipHandler) DeleteContent(ctx context.Context, request *turnip.PrimaryIdRequest) (*turnip.ContentRequestResponse, error) {
