@@ -176,7 +176,7 @@ func (h turnipHandler) GetAllContent(ctx context.Context, request *turnip.GetAll
 	panic("implement me")
 }
 
-func (h turnipHandler) PutContent(ctx context.Context, request *turnip.ContentRequestResponse) (*turnip.ContentRequestResponse, error) {
+func (h turnipHandler) UpdateContent(ctx context.Context, request *turnip.ContentRequestResponse) (*turnip.ContentRequestResponse, error) {
 	// todo: rename to UpdateContent
 	// todo: add access check later
 	_, twerr := h.IsAuthenticated(ctx)
