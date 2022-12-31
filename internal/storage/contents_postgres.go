@@ -3,9 +3,12 @@ package storage
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgtype"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/TurnipXenon/turnip_api/rpc/turnip"
@@ -30,23 +33,16 @@ func (c *contentsPostgresImpl) GetMigrationSequence() []migration.Migration {
 	}
 }
 
-func (c *contentsPostgresImpl) CreateContent(ctx context.Context, request *turnip.CreateContentRequest, user *turnip.User) (*turnip.Content, error) {
+func (c *contentsPostgresImpl) CreateContent(ctx context.Context, request *turnip.ContentRequestResponse, user *turnip.User) (*turnip.Content, error) {
 	// todo: require some fields!
 
 	// create uuid
 	// very unlikely to collide, right?
-	content := turnip.Content{
-		Title:         request.Title,
-		Description:   request.Description,
-		Content:       request.Content,
-		Media:         request.Media,
-		TagList:       request.TagList,
-		AccessDetails: request.AccessDetails,
-		Meta:          request.Meta,
-		PrimaryId:     uuid.New().String(),
-		CreatedAt:     timestamppb.Now(),
-		AuthorId:      user.PrimaryId,
-	}
+	content := request.Item
+	content.PrimaryId = uuid.New().String()
+	content.CreatedAt = timestamppb.Now()
+	content.AuthorId = user.PrimaryId
+
 	accessDetails, err := json.Marshal(content.AccessDetails)
 	if err != nil {
 		util.LogDetailedError(err)
@@ -71,17 +67,107 @@ func (c *contentsPostgresImpl) CreateContent(ctx context.Context, request *turni
 		return nil, util.WrapErrorWithDetails(err)
 	}
 
+	return content, nil
+}
+
+func pgxUuidToGoogleUuid(initial pgtype.UUID) (*uuid.UUID, error) {
+	final, err := uuid.FromBytes(initial.Bytes[:])
+	if err != nil {
+		util.LogDetailedError(err)
+		return nil, util.WrapErrorWithDetails(err)
+	}
+	return &final, nil
+}
+
+func pgxUuidToStringUuid(initial pgtype.UUID) (string, error) {
+	final, err := pgxUuidToGoogleUuid(initial)
+	if err != nil {
+		util.LogDetailedError(err)
+		return "", err
+	}
+	return final.String(), nil
+}
+
+func pgxByteToStringUuid(initial []byte) (string, error) {
+	final, err := uuid.FromBytes(initial)
+	if err != nil {
+		util.LogDetailedError(err)
+		return "", util.WrapErrorWithDetails(err)
+	}
+	return final.String(), nil
+}
+
+func (c *contentsPostgresImpl) GetContentById(ctx context.Context, idQuery string) (*turnip.Content, error) {
+	row := c.db.Pool.QueryRow(ctx, `SELECT t.*
+               FROM "Content" t
+               WHERE primary_id = $1
+               LIMIT 1`, idQuery)
+
+	var content turnip.Content
+	var primaryId pgtype.UUID
+	var authorId pgtype.UUID
+	var createdAt pgtype.Timestamp
+	var accessDetails, meta string
+	// todo: turn to CollectRow
+	err := row.Scan(&primaryId, &createdAt, &content.Title, &content.Description, &content.Content,
+		&content.TagList, &accessDetails, &meta, &authorId)
+	if err != nil {
+		util.LogDetailedError(err)
+		return nil, util.WrapErrorWithDetails(err)
+	}
+
+	content.PrimaryId, err = pgxUuidToStringUuid(primaryId)
+	content.AuthorId, err = pgxUuidToStringUuid(authorId)
+	content.CreatedAt = timestamppb.New(createdAt.Time)
+	// todo: parse from string accessDetails and meta
+	content.AccessDetails = &turnip.AccessDetails{}
+	content.Meta = map[string]string{}
+
 	return &content, nil
 }
 
-func (c *contentsPostgresImpl) GetContentById(ctx context.Context, primary string) (*turnip.Content, error) {
-	//TODO implement me
-	panic("implement me")
-}
-
 func (c *contentsPostgresImpl) GetAllContent(ctx context.Context) ([]*turnip.Content, error) {
-	//TODO implement me
-	panic("implement me")
+	contentList := []*turnip.Content{}
+
+	// todo: handle paging
+	var primaryId, authorId pgtype.UUID
+	var createdAt pgtype.Timestamp
+	var title, description, content string
+	var tagList []string
+	var accessDetails, meta string
+
+	rows, _ := c.db.Pool.Query(ctx, `SELECT * FROM "Content"`)
+	_, err := pgx.ForEachRow(rows, []any{&primaryId, &createdAt, &title, &description, &content,
+		&tagList, &accessDetails, &meta, &authorId}, func() error {
+		// todo: check if access, otherwise add to list
+		newContent := &turnip.Content{
+			Title:         title,
+			Description:   description,
+			Content:       content,
+			TagList:       tagList,
+			AccessDetails: nil, // todo parse
+			Meta:          nil, // todo parse
+			// todo media field
+		}
+
+		var err error
+		newContent.PrimaryId, err = pgxUuidToStringUuid(primaryId)
+		fmt.Println(newContent.PrimaryId)
+		newContent.AuthorId, err = pgxUuidToStringUuid(authorId)
+		if err != nil {
+			util.LogDetailedError(err)
+		}
+
+		newContent.CreatedAt = timestamppb.New(createdAt.Time)
+		contentList = append(contentList, newContent)
+		return nil
+	})
+	if err != nil {
+		util.LogDetailedError(err)
+		return nil, util.WrapErrorWithDetails(err)
+	}
+
+	return contentList, nil
 }
 
 func (c *contentsPostgresImpl) GetContentByTag(ctx context.Context, tag string) ([]*turnip.Content, error) {
