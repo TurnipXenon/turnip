@@ -3,13 +3,14 @@ package server
 import (
 	"context"
 	"errors"
-	"github.com/TurnipXenon/turnip/internal/storage"
+	"fmt"
 
 	"github.com/twitchtv/twirp"
 	"golang.org/x/crypto/bcrypt"
 
 	"github.com/TurnipXenon/turnip_api/rpc/turnip"
 
+	"github.com/TurnipXenon/turnip/internal/storage"
 	"github.com/TurnipXenon/turnip/internal/util"
 )
 
@@ -109,7 +110,7 @@ func (h turnipHandler) IsAuthenticated(ctx context.Context) (*turnip.User, twirp
 	}, nil
 }
 
-func (h turnipHandler) CreateContent(ctx context.Context, request *turnip.CreateContentRequest) (*turnip.CreateContentResponse, error) {
+func (h turnipHandler) CreateContent(ctx context.Context, request *turnip.ContentRequestResponse) (*turnip.ContentRequestResponse, error) {
 	user, twerr := h.IsAuthenticated(ctx)
 	if user == nil {
 		return nil, twerr
@@ -122,15 +123,65 @@ func (h turnipHandler) CreateContent(ctx context.Context, request *turnip.Create
 
 	// todo(turnip): create tag
 
-	return &turnip.CreateContentResponse{
-		Title:         content.Title,
-		Description:   content.Description,
-		Content:       content.Content,
-		Media:         content.Media,
-		TagList:       content.TagList,
-		AccessDetails: content.AccessDetails,
-		Meta:          content.Meta,
-		PrimaryId:     content.PrimaryId,
-		CreatedAt:     content.CreatedAt,
+	return &turnip.ContentRequestResponse{
+		Item: content,
 	}, nil
+}
+
+func (h turnipHandler) GetContentById(ctx context.Context, request *turnip.PrimaryIdRequest) (*turnip.ContentRequestResponse, error) {
+	// todo: add access check later
+	_, twerr := h.IsAuthenticated(ctx)
+	if twerr != nil {
+		util.LogDetailedError(twerr)
+		return nil, twerr
+	}
+
+	content, err := h.server.Contents.GetContentById(ctx, request.PrimaryId)
+	if err != nil {
+		return nil, twirp.InternalErrorWith(err)
+	}
+	if content == nil {
+		return nil, twirp.NotFoundError(fmt.Sprintf("Content with id %s not found", request.PrimaryId))
+	}
+
+	// todo: check access details for the post and see if author can see it\
+
+	return &turnip.ContentRequestResponse{Item: content}, nil
+}
+
+func (h turnipHandler) GetContentBatchById(ctx context.Context, request *turnip.PrimaryIdRequest) (*turnip.MultipleContentResponse, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (h turnipHandler) GetAllContent(ctx context.Context, request *turnip.GetAllContentRequest) (*turnip.MultipleContentResponse, error) {
+	// todo: add pagination
+	// todo: add access checking
+	_, twerr := h.IsAuthenticated(ctx)
+	if twerr != nil {
+		util.LogDetailedError(twerr)
+		return nil, twerr
+	}
+
+	contentList, err := h.server.Contents.GetAllContent(ctx)
+	if err != nil {
+		return nil, twirp.InternalErrorWith(err)
+	}
+
+	// todo: check access details for the post and see if author can see it\
+
+	return &turnip.MultipleContentResponse{ItemList: contentList}, nil
+
+	//TODO implement me
+	panic("implement me")
+}
+
+func (h turnipHandler) PutContent(ctx context.Context, response *turnip.ContentRequestResponse) (*turnip.ContentRequestResponse, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (h turnipHandler) DeleteContent(ctx context.Context, request *turnip.PrimaryIdRequest) (*turnip.ContentRequestResponse, error) {
+	//TODO implement me
+	panic("implement me")
 }
