@@ -60,7 +60,7 @@ func RunServeMux(s *Server, flags models.RunFlags) {
 
 	// setup turnip
 	ti := NewTurnipHandler(s)
-	twirpHandler := turnip.NewTurnipServer(ti, twirp.WithServerPathPrefix("/api/v1"))
+	twirpHandler := turnip.NewTurnipServer(ti, twirp.WithServerPathPrefix("/api"))
 
 	// grab header details
 	authWrapper := NewAuthMiddleware(twirpHandler, s)
