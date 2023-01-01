@@ -89,6 +89,10 @@ func RunServeMux(s *Server, flags *models.RunFlags) {
 		AllowedOrigins:   flags.CorsAllowList,
 		AllowCredentials: false,
 		Debug:            true,
+		AllowedHeaders: []string{
+			"Content-Type",
+			"Authorization",
+		},
 	})
 	corsHandler := c.Handler(authWrapper)
 
