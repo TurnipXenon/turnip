@@ -130,24 +130,30 @@ func (c *contentsPostgresImpl) GetContentById(ctx context.Context, idQuery strin
 	return &content, nil
 }
 
+func derefString(p *string) string {
+	if p == nil {
+		return ""
+	}
+	return *p
+}
+
 func (c *contentsPostgresImpl) GetAllContent(ctx context.Context) ([]*turnip.Content, error) {
 	contentList := []*turnip.Content{}
 
 	// todo: handle paging
 	var primaryId, authorId pgtype.UUID
 	var createdAt pgtype.Timestamp
-	var title, description, content string
+	var title, description, content, accessDetails, meta *string
 	var tagList []string
-	var accessDetails, meta string
 
 	rows, _ := c.db.Pool.Query(ctx, `SELECT * FROM "Content"`)
 	_, err := pgx.ForEachRow(rows, []any{&primaryId, &createdAt, &title, &description, &content,
 		&tagList, &accessDetails, &meta, &authorId}, func() error {
-		// todo: check if access, otherwise add to list
+		// todo: check if accessible, otherwise add to list
 		newContent := &turnip.Content{
-			Title:         title,
-			Description:   description,
-			Content:       content,
+			Title:         derefString(title),
+			Description:   derefString(description),
+			Content:       derefString(content),
 			TagList:       tagList,
 			AccessDetails: nil, // todo parse
 			Meta:          nil, // todo parse

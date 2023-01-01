@@ -4,3 +4,4 @@ nav:
   - Onboarding: onboarding.md
   - Private workflow: private_workflow.md
   - Code standards: code_standards.md
+  - Infrastructure: infrastructure.md
