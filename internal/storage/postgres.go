@@ -32,7 +32,7 @@ type GenericPostgresTable interface {
 
 // NewPostgresDatabase remember to defer DeferredClose!!!
 // todo: improve documentation
-func NewPostgresDatabase(ctx context.Context, flags models.RunFlags) *PostgresDb {
+func NewPostgresDatabase(ctx context.Context, flags *models.RunFlags) *PostgresDb {
 	p := PostgresDb{}
 	var err error
 	// urlExample := "postgres://username:password@localhost:5432/database_name"
