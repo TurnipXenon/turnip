@@ -53,7 +53,7 @@ func (m *Mux) serveSingle(pattern string, filename string, Mux *mux.Router) {
 	})
 }
 
-func RunServeMux(s *Server, flags models.RunFlags) {
+func RunServeMux(s *Server, flags *models.RunFlags) {
 	//m := Mux{
 	//	HostMap: s.Storage.GetHostMap(),
 	//}
@@ -78,8 +78,13 @@ func RunServeMux(s *Server, flags models.RunFlags) {
 	//router.PathPrefix("/assets/").Handler(http.StripPrefix("/assets/", http.FileServer(http.Dir("./assets/"))))
 
 	// todo: take a look at CORS more for safety stuff
+	flags.CorsAllowList = append(flags.CorsAllowList, []string{
+		"http://localhost:3000",
+		"http://127.0.0.1:3000",
+	}...)
+	fmt.Println(flags.CorsAllowList)
 	c := cors.New(cors.Options{
-		AllowedOrigins:   []string{"http://localhost:3000", "http://127.0.0.1:3000"},
+		AllowedOrigins:   flags.CorsAllowList,
 		AllowCredentials: false,
 		Debug:            true,
 	})
