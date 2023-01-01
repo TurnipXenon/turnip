@@ -82,6 +82,8 @@ func RunServeMux(s *Server, flags *models.RunFlags) {
 		"http://localhost:3000",
 		"http://127.0.0.1:3000",
 	}...)
+	// todo: remove in the future
+	fmt.Println("Allowing CORS on the following hosts:")
 	fmt.Println(flags.CorsAllowList)
 	c := cors.New(cors.Options{
 		AllowedOrigins:   flags.CorsAllowList,
