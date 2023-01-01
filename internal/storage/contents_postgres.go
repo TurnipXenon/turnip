@@ -108,9 +108,9 @@ func (c *contentsPostgresImpl) GetContentById(ctx context.Context, idQuery strin
 	var primaryId pgtype.UUID
 	var authorId pgtype.UUID
 	var createdAt pgtype.Timestamp
-	var accessDetails, meta string
+	var title, description, contentString, accessDetails, meta *string
 	// todo: turn to CollectRow
-	err := row.Scan(&primaryId, &createdAt, &content.Title, &content.Description, &content.Content,
+	err := row.Scan(&primaryId, &createdAt, &title, &description, &contentString,
 		&content.TagList, &accessDetails, &meta, &authorId)
 	if err == pgx.ErrNoRows {
 		return nil, nil
@@ -120,6 +120,9 @@ func (c *contentsPostgresImpl) GetContentById(ctx context.Context, idQuery strin
 		return nil, util.WrapErrorWithDetails(err)
 	}
 
+	content.Title = derefString(title)
+	content.Description = derefString(description)
+	content.Content = derefString(contentString)
 	content.PrimaryId, err = pgxUuidToStringUuid(primaryId)
 	content.AuthorId, err = pgxUuidToStringUuid(authorId)
 	content.CreatedAt = timestamppb.New(createdAt.Time)
