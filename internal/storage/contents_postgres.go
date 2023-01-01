@@ -3,7 +3,6 @@ package storage
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"time"
 
 	"github.com/google/uuid"
@@ -157,7 +156,6 @@ func (c *contentsPostgresImpl) GetAllContent(ctx context.Context) ([]*turnip.Con
 
 		var err error
 		newContent.PrimaryId, err = pgxUuidToStringUuid(primaryId)
-		fmt.Println(newContent.PrimaryId)
 		newContent.AuthorId, err = pgxUuidToStringUuid(authorId)
 		if err != nil {
 			util.LogDetailedError(err)
