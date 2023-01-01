@@ -3,7 +3,7 @@ module github.com/TurnipXenon/turnip
 go 1.18
 
 require (
-	github.com/TurnipXenon/turnip_api v0.0.0-20221230232708-103e7c81815e
+	github.com/TurnipXenon/turnip_api v0.0.0-20221231045754-9abb8fb190ea
 	github.com/google/uuid v1.3.0
 	github.com/gorilla/mux v1.8.0
 	github.com/jackc/pgx/v5 v5.2.0

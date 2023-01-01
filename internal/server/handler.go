@@ -176,12 +176,54 @@ func (h turnipHandler) GetAllContent(ctx context.Context, request *turnip.GetAll
 	panic("implement me")
 }
 
-func (h turnipHandler) PutContent(ctx context.Context, response *turnip.ContentRequestResponse) (*turnip.ContentRequestResponse, error) {
-	//TODO implement me
-	panic("implement me")
+func (h turnipHandler) UpdateContent(ctx context.Context, request *turnip.ContentRequestResponse) (*turnip.ContentRequestResponse, error) {
+	// todo: rename to UpdateContent
+	// todo: add access check later
+	_, twerr := h.IsAuthenticated(ctx)
+	if twerr != nil {
+		util.LogDetailedError(twerr)
+		return nil, twerr
+	}
+
+	if request.Item == nil {
+		return nil, twirp.RequiredArgumentError("Item")
+	}
+
+	oldContent, err := h.GetContentById(ctx, &turnip.PrimaryIdRequest{PrimaryId: request.Item.PrimaryId})
+	if err != nil {
+		util.LogDetailedError(err)
+		return nil, err // not wrapping with twerr because it's already twerr
+	}
+
+	_, err = h.server.Contents.UpdateContent(ctx, request.Item)
+	if err != nil {
+		util.LogDetailedError(err)
+		return nil, twirp.InternalErrorWith(err)
+	}
+
+	return &turnip.ContentRequestResponse{Item: oldContent.Item}, nil
 }
 
 func (h turnipHandler) DeleteContent(ctx context.Context, request *turnip.PrimaryIdRequest) (*turnip.ContentRequestResponse, error) {
-	//TODO implement me
-	panic("implement me")
+	// todo: add access check later
+	_, twerr := h.IsAuthenticated(ctx)
+	if twerr != nil {
+		util.LogDetailedError(twerr)
+		return nil, twerr
+	}
+
+	oldContent, err := h.GetContentById(ctx, &turnip.PrimaryIdRequest{PrimaryId: request.PrimaryId})
+	if err != nil {
+		util.LogDetailedError(err)
+		return nil, err // skipping wrapping with twerr because it's actually twerr!
+	}
+
+	_, err = h.server.Contents.DeleteContentById(ctx, request.PrimaryId)
+	if err != nil {
+		return nil, twirp.InternalErrorWith(err)
+	}
+
+	// todo: check access details for the post and see if author can see it\
+
+	return &turnip.ContentRequestResponse{Item: oldContent.Item}, nil
 }
