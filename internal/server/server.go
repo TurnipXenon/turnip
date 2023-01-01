@@ -21,7 +21,7 @@ type Server struct {
 }
 
 // InitializeServer remember to defer cleanup!
-func InitializeServer(ctx context.Context, flags models.RunFlags) *Server {
+func InitializeServer(ctx context.Context, flags *models.RunFlags) *Server {
 	s := Server{}
 	s.db = storage.NewPostgresDatabase(ctx, flags)
 
