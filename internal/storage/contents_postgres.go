@@ -3,6 +3,8 @@ package storage
 import (
 	"context"
 	"encoding/json"
+	"fmt"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -19,7 +21,7 @@ import (
 type contentsPostgresImpl struct {
 	db        *PostgresDb
 	tableName string
-	// todo: global secondary index
+	tags      Tags
 }
 
 func (c *contentsPostgresImpl) GetTableName() string {
@@ -34,6 +36,7 @@ func (c *contentsPostgresImpl) GetMigrationSequence() []migration.Migration {
 
 func (c *contentsPostgresImpl) CreateContent(ctx context.Context, request *turnip.ContentRequestResponse, user *turnip.User) (*turnip.Content, error) {
 	// todo: require some fields!
+	// todo test tags
 
 	// create uuid
 	// very unlikely to collide, right?
@@ -66,6 +69,11 @@ func (c *contentsPostgresImpl) CreateContent(ctx context.Context, request *turni
 		return nil, util.WrapErrorWithDetails(err)
 	}
 
+	err = c.tags.UpdateTags(ctx, content)
+	if err != nil {
+		util.LogDetailedError(err)
+	}
+
 	return content, nil
 }
 
@@ -87,18 +95,11 @@ func pgxUuidToStringUuid(initial pgtype.UUID) (string, error) {
 	return final.String(), nil
 }
 
-func pgxByteToStringUuid(initial []byte) (string, error) {
-	final, err := uuid.FromBytes(initial)
-	if err != nil {
-		util.LogDetailedError(err)
-		return "", util.WrapErrorWithDetails(err)
-	}
-	return final.String(), nil
-}
-
 // GetContentById returns nil content also with nil error!
 // todo: document behavior
 func (c *contentsPostgresImpl) GetContentById(ctx context.Context, idQuery string) (*turnip.Content, error) {
+	// todo test tags
+
 	row := c.db.Pool.QueryRow(ctx, `SELECT t.*
                FROM "Content" t
                WHERE primary_id = $1
@@ -130,6 +131,11 @@ func (c *contentsPostgresImpl) GetContentById(ctx context.Context, idQuery strin
 	content.AccessDetails = &turnip.AccessDetails{}
 	content.Meta = map[string]string{}
 
+	content.TagList, err = c.tags.GetTagsByContent(ctx, &content)
+	if err != nil {
+		util.LogDetailedError(err)
+	}
+
 	return &content, nil
 }
 
@@ -140,16 +146,12 @@ func derefString(p *string) string {
 	return *p
 }
 
-func (c *contentsPostgresImpl) GetAllContent(ctx context.Context) ([]*turnip.Content, error) {
+func (c *contentsPostgresImpl) rowsToContentList(ctx context.Context, rows pgx.Rows) ([]*turnip.Content, error) {
 	contentList := []*turnip.Content{}
-
-	// todo: handle paging
 	var primaryId, authorId pgtype.UUID
 	var createdAt pgtype.Timestamp
 	var title, description, content, accessDetails, meta *string
 	var tagList []string
-
-	rows, _ := c.db.Pool.Query(ctx, `SELECT * FROM "Content"`)
 	_, err := pgx.ForEachRow(rows, []any{&primaryId, &createdAt, &title, &description, &content,
 		&tagList, &accessDetails, &meta, &authorId}, func() error {
 		// todo: check if accessible, otherwise add to list
@@ -171,6 +173,7 @@ func (c *contentsPostgresImpl) GetAllContent(ctx context.Context) ([]*turnip.Con
 		}
 
 		newContent.CreatedAt = timestamppb.New(createdAt.Time)
+		newContent.TagList, err = c.tags.GetTagsByContent(ctx, newContent)
 		contentList = append(contentList, newContent)
 		return nil
 	})
@@ -178,17 +181,41 @@ func (c *contentsPostgresImpl) GetAllContent(ctx context.Context) ([]*turnip.Con
 		util.LogDetailedError(err)
 		return nil, util.WrapErrorWithDetails(err)
 	}
-
 	return contentList, nil
 }
 
+func (c *contentsPostgresImpl) GetAllContent(ctx context.Context) ([]*turnip.Content, error) {
+	// todo test tags
+
+	rows, _ := c.db.Pool.Query(ctx, `SELECT * FROM "Content"`)
+	return c.rowsToContentList(ctx, rows)
+}
+
 func (c *contentsPostgresImpl) GetContentByTag(ctx context.Context, tag string) ([]*turnip.Content, error) {
-	//TODO implement me
-	panic("implement me")
+	// todo test tags
+
+	contentIdList, err := c.tags.GetContentIdsByTag(ctx, []string{tag})
+	if err != nil {
+		util.LogDetailedError(err)
+		return nil, util.WrapErrorWithDetails(err)
+	}
+	if len(contentIdList) == 0 {
+		return nil, nil
+	}
+
+	for i := 0; i < len(contentIdList); i++ {
+		// transform with single quotes
+		contentIdList[i] = fmt.Sprintf("'%s'", contentIdList[i])
+	}
+	idList := strings.Join(contentIdList, ", ")
+	rows, _ := c.db.Pool.Query(ctx,
+		fmt.Sprintf(`SELECT * FROM "%s" WHERE primary_id IN (%s)`,
+			c.tableName, idList))
+	return c.rowsToContentList(ctx, rows)
 }
 
 func (c *contentsPostgresImpl) UpdateContent(ctx context.Context, newContent *turnip.Content) (*turnip.Content, error) {
-	// todo here
+	// todo test tags
 
 	// todo: make setting more dynamic instead of setting everything
 	// todo set these attributes to UpdateContent
@@ -201,19 +228,29 @@ func (c *contentsPostgresImpl) UpdateContent(ctx context.Context, newContent *tu
 		newContent.Title, newContent.Description, newContent.Content, // 1-3
 		newContent.TagList, accessDetails, meta, newContent.PrimaryId, // 4-7
 	)
-
-	// todo: put NoRowErr check here!
-
 	if err != nil {
 		util.LogDetailedError(err)
 		return nil, util.WrapErrorWithDetails(err)
+	}
+
+	// todo: put NoRowErr check here!
+	err = c.tags.UpdateTags(ctx, newContent)
+	if err != nil {
+		util.LogDetailedError(err)
 	}
 
 	return newContent, nil
 }
 
 func (c *contentsPostgresImpl) DeleteContentById(ctx context.Context, primaryId string) (*turnip.Content, error) {
-	_, err := c.db.Pool.Exec(ctx, `DELETE FROM "Content" 
+	// todo test tags
+
+	err := c.tags.DeleteTags(ctx, primaryId)
+	if err != nil {
+		util.LogDetailedError(err)
+	}
+
+	_, err = c.db.Pool.Exec(ctx, `DELETE FROM "Content" 
        WHERE primary_id = $1`, primaryId)
 
 	if err != nil {
@@ -224,12 +261,13 @@ func (c *contentsPostgresImpl) DeleteContentById(ctx context.Context, primaryId 
 	return nil, nil
 }
 
-func NewContentsPostgres(ctx context.Context, d *PostgresDb) Contents {
+func NewContentsPostgres(ctx context.Context, d *PostgresDb, tags Tags) Contents {
 	// primary: primary id
 	// sort: created at
 	t := contentsPostgresImpl{
 		db:        d,
 		tableName: "Content",
+		tags:      tags,
 	}
 
 	SetupTable(ctx, d, &t)
