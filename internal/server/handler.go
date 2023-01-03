@@ -210,9 +210,12 @@ func (h turnipHandler) UpdateContent(ctx context.Context, request *turnip.Conten
 
 func (h turnipHandler) DeleteContent(ctx context.Context, request *turnip.PrimaryIdRequest) (*turnip.ContentRequestResponse, error) {
 	// todo: add access check later
+	if len(request.PrimaryId) == 0 {
+		return nil, twirp.RequiredArgumentError("primary_id")
+	}
+
 	_, twerr := h.IsAuthenticated(ctx)
 	if twerr != nil {
-		util.LogDetailedError(twerr)
 		return nil, twerr
 	}
 
@@ -230,4 +233,23 @@ func (h turnipHandler) DeleteContent(ctx context.Context, request *turnip.Primar
 	// todo: check access details for the post and see if author can see it\
 
 	return &turnip.ContentRequestResponse{Item: oldContent.Item}, nil
+}
+
+func (h turnipHandler) GetContentsByTag(ctx context.Context, request *turnip.GetContentsByTagRequest) (*turnip.MultipleContentResponse, error) {
+	if len(request.TagList) == 0 {
+		return nil, twirp.RequiredArgumentError("tag_list")
+	}
+
+	_, twerr := h.IsAuthenticated(ctx)
+	if twerr != nil {
+		return nil, twerr
+	}
+
+	contentList, err := h.server.Contents.GetContentByTag(ctx, request.TagList)
+	if err != nil {
+		util.LogDetailedError(err)
+		return nil, twirp.InternalErrorWith(err)
+	}
+
+	return &turnip.MultipleContentResponse{ItemList: contentList}, nil
 }

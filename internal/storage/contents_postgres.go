@@ -191,10 +191,8 @@ func (c *contentsPostgresImpl) GetAllContent(ctx context.Context) ([]*turnip.Con
 	return c.rowsToContentList(ctx, rows)
 }
 
-func (c *contentsPostgresImpl) GetContentByTag(ctx context.Context, tag string) ([]*turnip.Content, error) {
-	// todo test tags
-
-	contentIdList, err := c.tags.GetContentIdsByTag(ctx, []string{tag})
+func (c *contentsPostgresImpl) GetContentByTag(ctx context.Context, tag []string) ([]*turnip.Content, error) {
+	contentIdList, err := c.tags.GetContentIdsByTag(ctx, tag)
 	if err != nil {
 		util.LogDetailedError(err)
 		return nil, util.WrapErrorWithDetails(err)
