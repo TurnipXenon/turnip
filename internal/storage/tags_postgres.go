@@ -19,9 +19,15 @@ type tagsPostgresImpl struct {
 	tableName string
 }
 
-func (t *tagsPostgresImpl) DeleteTags(ctx context.Context, primaryId string) error {
-	//TODO implement me
-	panic("implement me")
+func (t *tagsPostgresImpl) DeleteTagsByContentId(ctx context.Context, primaryId string) error {
+	// todo: consider deleting in the future
+	_, err := t.db.Pool.Query(ctx,
+		`SELECT FROM "Tag" WHERE content_id=$1`, primaryId)
+	if err != nil {
+		util.LogDetailedError(err)
+		return util.WrapErrorWithDetails(err)
+	}
+	return nil
 }
 
 func stringListToSqlInArgument(valueList []string) string {
@@ -109,8 +115,6 @@ func (t *tagsPostgresImpl) GetContentIdsByTag(ctx context.Context, tagList []str
 	}
 
 	inParam := stringListToSqlInArgument(tagList)
-	fmt.Println(fmt.Sprintf(`SELECT content_id FROM "Tag" WHERE tag in (%s)`, inParam))
-
 	rows, _ := t.db.Pool.Query(ctx,
 		fmt.Sprintf(`SELECT content_id FROM "Tag" WHERE tag in (%s)`, inParam))
 	contentIdList, err := pgx.CollectRows(rows, func(row pgx.CollectableRow) (string, error) {

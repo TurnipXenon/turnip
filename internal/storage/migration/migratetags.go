@@ -6,7 +6,7 @@ const (
     tag        text,
     content_id uuid
         constraint "Tag_Content_primary_id_fk"
-            references "Content",
+            references "Content" ON DELETE CASCADE,
     created_at timestamp,
     constraint "Tag_pk"
         primary key (tag, content_id)

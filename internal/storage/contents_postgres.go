@@ -36,7 +36,6 @@ func (c *contentsPostgresImpl) GetMigrationSequence() []migration.Migration {
 
 func (c *contentsPostgresImpl) CreateContent(ctx context.Context, request *turnip.ContentRequestResponse, user *turnip.User) (*turnip.Content, error) {
 	// todo: require some fields!
-	// todo test tags
 
 	// create uuid
 	// very unlikely to collide, right?
@@ -98,8 +97,6 @@ func pgxUuidToStringUuid(initial pgtype.UUID) (string, error) {
 // GetContentById returns nil content also with nil error!
 // todo: document behavior
 func (c *contentsPostgresImpl) GetContentById(ctx context.Context, idQuery string) (*turnip.Content, error) {
-	// todo test tags
-
 	row := c.db.Pool.QueryRow(ctx, `SELECT t.*
                FROM "Content" t
                WHERE primary_id = $1
@@ -185,8 +182,6 @@ func (c *contentsPostgresImpl) rowsToContentList(ctx context.Context, rows pgx.R
 }
 
 func (c *contentsPostgresImpl) GetAllContent(ctx context.Context) ([]*turnip.Content, error) {
-	// todo test tags
-
 	rows, _ := c.db.Pool.Query(ctx, `SELECT * FROM "Content"`)
 	return c.rowsToContentList(ctx, rows)
 }
@@ -213,8 +208,6 @@ func (c *contentsPostgresImpl) GetContentByTag(ctx context.Context, tag []string
 }
 
 func (c *contentsPostgresImpl) UpdateContent(ctx context.Context, newContent *turnip.Content) (*turnip.Content, error) {
-	// todo test tags
-
 	// todo: make setting more dynamic instead of setting everything
 	// todo set these attributes to UpdateContent
 	accessDetails := &turnip.AccessDetails{}
@@ -241,14 +234,7 @@ func (c *contentsPostgresImpl) UpdateContent(ctx context.Context, newContent *tu
 }
 
 func (c *contentsPostgresImpl) DeleteContentById(ctx context.Context, primaryId string) (*turnip.Content, error) {
-	// todo test tags
-
-	err := c.tags.DeleteTags(ctx, primaryId)
-	if err != nil {
-		util.LogDetailedError(err)
-	}
-
-	_, err = c.db.Pool.Exec(ctx, `DELETE FROM "Content" 
+	_, err := c.db.Pool.Exec(ctx, `DELETE FROM "Content" 
        WHERE primary_id = $1`, primaryId)
 
 	if err != nil {
