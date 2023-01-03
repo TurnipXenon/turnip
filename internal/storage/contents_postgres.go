@@ -94,6 +94,11 @@ func pgxUuidToStringUuid(initial pgtype.UUID) (string, error) {
 	return final.String(), nil
 }
 
+func stringToStringPtr(value string) *string {
+	tmp := value
+	return &tmp
+}
+
 // GetContentById returns nil content also with nil error!
 // todo: document behavior
 func (c *contentsPostgresImpl) GetContentById(ctx context.Context, idQuery string) (*turnip.Content, error) {
@@ -126,7 +131,11 @@ func (c *contentsPostgresImpl) GetContentById(ctx context.Context, idQuery strin
 	content.CreatedAt = timestamppb.New(createdAt.Time)
 	// todo: parse from string accessDetails and meta
 	content.AccessDetails = &turnip.AccessDetails{}
-	content.Meta = map[string]string{}
+	if meta == nil {
+		meta = stringToStringPtr("")
+	}
+	json.Unmarshal([]byte(*meta), &content.Meta)
+	//content.Meta = map[string]string{}
 
 	content.TagList, err = c.tags.GetTagsByContent(ctx, &content)
 	if err != nil {
@@ -171,6 +180,10 @@ func (c *contentsPostgresImpl) rowsToContentList(ctx context.Context, rows pgx.R
 
 		newContent.CreatedAt = timestamppb.New(createdAt.Time)
 		newContent.TagList, err = c.tags.GetTagsByContent(ctx, newContent)
+		if meta == nil {
+			meta = stringToStringPtr("")
+		}
+		json.Unmarshal([]byte(*meta), &newContent.Meta)
 		contentList = append(contentList, newContent)
 		return nil
 	})
@@ -211,9 +224,13 @@ func (c *contentsPostgresImpl) UpdateContent(ctx context.Context, newContent *tu
 	// todo: make setting more dynamic instead of setting everything
 	// todo set these attributes to UpdateContent
 	accessDetails := &turnip.AccessDetails{}
-	meta := ""
+	meta, err := json.Marshal(newContent.Meta)
+	if err != nil {
+		util.LogDetailedError(err)
+		return nil, util.WrapErrorWithDetails(err)
+	}
 
-	_, err := c.db.Pool.Exec(ctx, `UPDATE public."Content"
+	_, err = c.db.Pool.Exec(ctx, `UPDATE public."Content"
 		SET title=$1, description=$2, content=$3, tag_list=$4, access_details=$5, meta=$6
 		WHERE primary_id = $7`,
 		newContent.Title, newContent.Description, newContent.Content, // 1-3
