@@ -2,7 +2,6 @@ package storage
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -23,6 +22,18 @@ type tagsPostgresImpl struct {
 func (t *tagsPostgresImpl) DeleteTags(ctx context.Context, primaryId string) error {
 	//TODO implement me
 	panic("implement me")
+}
+
+func stringListToSqlInArgument(valueList []string) string {
+	if len(valueList) == 0 {
+		return ""
+	}
+
+	var l []string
+	for _, s := range valueList {
+		l = append(l, fmt.Sprintf("'%s'", strings.ToLower(s)))
+	}
+	return strings.Join(l, ", ")
 }
 
 func (t *tagsPostgresImpl) UpdateTags(ctx context.Context, content *turnip.Content) error {
@@ -93,8 +104,26 @@ func (t *tagsPostgresImpl) GetTagsByContent(ctx context.Context, content *turnip
 }
 
 func (t *tagsPostgresImpl) GetContentIdsByTag(ctx context.Context, tagList []string) ([]string, error) {
-	//TODO implement me
-	return []string{}, errors.New("unimplemented")
+	if len(tagList) == 0 {
+		return nil, nil
+	}
+
+	inParam := stringListToSqlInArgument(tagList)
+	fmt.Println(fmt.Sprintf(`SELECT content_id FROM "Tag" WHERE tag in (%s)`, inParam))
+
+	rows, _ := t.db.Pool.Query(ctx,
+		fmt.Sprintf(`SELECT content_id FROM "Tag" WHERE tag in (%s)`, inParam))
+	contentIdList, err := pgx.CollectRows(rows, func(row pgx.CollectableRow) (string, error) {
+		var n string
+		err := row.Scan(&n)
+		return n, err
+	})
+	if err != nil {
+		util.LogDetailedError(err)
+		return []string{}, util.WrapErrorWithDetails(err)
+	}
+
+	return contentIdList, nil
 }
 
 func (t *tagsPostgresImpl) GetTableName() string {
