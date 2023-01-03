@@ -186,7 +186,7 @@ func (c *contentsPostgresImpl) GetAllContent(ctx context.Context) ([]*turnip.Con
 	return c.rowsToContentList(ctx, rows)
 }
 
-func (c *contentsPostgresImpl) GetContentByTag(ctx context.Context, tag []string) ([]*turnip.Content, error) {
+func (c *contentsPostgresImpl) GetContentByTagInclusive(ctx context.Context, tag []string) ([]*turnip.Content, error) {
 	contentIdList, err := c.tags.GetContentIdsByTag(ctx, tag)
 	if err != nil {
 		util.LogDetailedError(err)
@@ -243,6 +243,11 @@ func (c *contentsPostgresImpl) DeleteContentById(ctx context.Context, primaryId 
 	}
 
 	return nil, nil
+}
+
+func (c *contentsPostgresImpl) GetContentByTagStrict(ctx context.Context, tag []string) ([]*turnip.Content, error) {
+	//TODO implement me
+	panic("implement me")
 }
 
 func NewContentsPostgres(ctx context.Context, d *PostgresDb, tags Tags) Contents {
