@@ -3,6 +3,7 @@ package storage
 import (
 	"context"
 	"fmt"
+	"sort"
 	"strings"
 	"time"
 
@@ -109,7 +110,7 @@ func (t *tagsPostgresImpl) GetTagsByContent(ctx context.Context, content *turnip
 	return oldTagList, nil
 }
 
-func (t *tagsPostgresImpl) GetContentIdsByTag(ctx context.Context, tagList []string) ([]string, error) {
+func (t *tagsPostgresImpl) GetContentIdsByTagInclusive(ctx context.Context, tagList []string) ([]string, error) {
 	if len(tagList) == 0 {
 		return nil, nil
 	}
@@ -117,6 +118,37 @@ func (t *tagsPostgresImpl) GetContentIdsByTag(ctx context.Context, tagList []str
 	inParam := stringListToSqlInArgument(tagList)
 	rows, _ := t.db.Pool.Query(ctx,
 		fmt.Sprintf(`SELECT content_id FROM "Tag" WHERE tag in (%s)`, inParam))
+	contentIdList, err := pgx.CollectRows(rows, func(row pgx.CollectableRow) (string, error) {
+		var n string
+		err := row.Scan(&n)
+		return n, err
+	})
+	if err != nil {
+		util.LogDetailedError(err)
+		return []string{}, util.WrapErrorWithDetails(err)
+	}
+
+	return contentIdList, nil
+}
+
+func (t *tagsPostgresImpl) GetContentIdsByTagStrict(ctx context.Context, tagList []string) ([]string, error) {
+	// todo here
+	if len(tagList) == 0 {
+		return nil, nil
+	}
+
+	// todo: order strings
+	var l []string
+	for _, s := range tagList {
+		l = append(l, fmt.Sprintf("'%s'", strings.ToLower(s)))
+	}
+	sort.Strings(l)
+	inParam := strings.Join(l, ", ")
+	query := fmt.Sprintf(`SELECT content_id
+FROM "Tag"
+GROUP BY content_id
+HAVING array_agg(tag order by tag) = array [%s]`, inParam)
+	rows, _ := t.db.Pool.Query(ctx, query)
 	contentIdList, err := pgx.CollectRows(rows, func(row pgx.CollectableRow) (string, error) {
 		var n string
 		err := row.Scan(&n)

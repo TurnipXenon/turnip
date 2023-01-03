@@ -187,7 +187,7 @@ func (c *contentsPostgresImpl) GetAllContent(ctx context.Context) ([]*turnip.Con
 }
 
 func (c *contentsPostgresImpl) GetContentByTagInclusive(ctx context.Context, tag []string) ([]*turnip.Content, error) {
-	contentIdList, err := c.tags.GetContentIdsByTag(ctx, tag)
+	contentIdList, err := c.tags.GetContentIdsByTagInclusive(ctx, tag)
 	if err != nil {
 		util.LogDetailedError(err)
 		return nil, util.WrapErrorWithDetails(err)
@@ -246,8 +246,24 @@ func (c *contentsPostgresImpl) DeleteContentById(ctx context.Context, primaryId 
 }
 
 func (c *contentsPostgresImpl) GetContentByTagStrict(ctx context.Context, tag []string) ([]*turnip.Content, error) {
-	//TODO implement me
-	panic("implement me")
+	contentIdList, err := c.tags.GetContentIdsByTagStrict(ctx, tag) // todo
+	if err != nil {
+		util.LogDetailedError(err)
+		return nil, util.WrapErrorWithDetails(err)
+	}
+	if len(contentIdList) == 0 {
+		return nil, nil
+	}
+
+	for i := 0; i < len(contentIdList); i++ {
+		// transform with single quotes
+		contentIdList[i] = fmt.Sprintf("'%s'", contentIdList[i])
+	}
+	idList := strings.Join(contentIdList, ", ")
+	rows, _ := c.db.Pool.Query(ctx,
+		fmt.Sprintf(`SELECT * FROM "%s" WHERE primary_id IN (%s)`,
+			c.tableName, idList))
+	return c.rowsToContentList(ctx, rows)
 }
 
 func NewContentsPostgres(ctx context.Context, d *PostgresDb, tags Tags) Contents {
