@@ -27,16 +27,10 @@ func (t *tagsPostgresImpl) DeleteTags(ctx context.Context, primaryId string) err
 
 func (t *tagsPostgresImpl) UpdateTags(ctx context.Context, content *turnip.Content) error {
 	// get old tags
-	rows, _ := t.db.Pool.Query(ctx,
-		`SELECT tag FROM "Tag" WHERE content_id=$1`, content.PrimaryId)
-	oldTagList, err := pgx.CollectRows(rows, func(row pgx.CollectableRow) (string, error) {
-		var n string
-		err := row.Scan(&n)
-		return n, err
-	})
+	oldTagList, err := t.GetTagsByContent(ctx, content)
 	if err != nil {
 		util.LogDetailedError(err)
-		return util.WrapErrorWithDetails(err)
+		return err
 	}
 
 	// turn old and new to maps or psuedo-sets
@@ -83,8 +77,19 @@ func (t *tagsPostgresImpl) UpdateTags(ctx context.Context, content *turnip.Conte
 }
 
 func (t *tagsPostgresImpl) GetTagsByContent(ctx context.Context, content *turnip.Content) ([]string, error) {
-	//TODO implement me
-	return []string{}, errors.New("unimplemented")
+	rows, _ := t.db.Pool.Query(ctx,
+		`SELECT tag FROM "Tag" WHERE content_id=$1`, content.PrimaryId)
+	oldTagList, err := pgx.CollectRows(rows, func(row pgx.CollectableRow) (string, error) {
+		var n string
+		err := row.Scan(&n)
+		return n, err
+	})
+	if err != nil {
+		util.LogDetailedError(err)
+		return []string{}, util.WrapErrorWithDetails(err)
+	}
+
+	return oldTagList, nil
 }
 
 func (t *tagsPostgresImpl) GetContentIdsByTag(ctx context.Context, tagList []string) ([]string, error) {
