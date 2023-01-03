@@ -111,6 +111,10 @@ func (h turnipHandler) IsAuthenticated(ctx context.Context) (*turnip.User, twirp
 }
 
 func (h turnipHandler) CreateContent(ctx context.Context, request *turnip.ContentRequestResponse) (*turnip.ContentRequestResponse, error) {
+	if request.Item == nil {
+		return nil, twirp.RequiredArgumentError("item")
+	}
+
 	user, twerr := h.IsAuthenticated(ctx)
 	if user == nil {
 		return nil, twerr
