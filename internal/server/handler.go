@@ -235,7 +235,7 @@ func (h turnipHandler) DeleteContent(ctx context.Context, request *turnip.Primar
 	return &turnip.ContentRequestResponse{Item: oldContent.Item}, nil
 }
 
-func (h turnipHandler) GetContentsByTag(ctx context.Context, request *turnip.GetContentsByTagRequest) (*turnip.MultipleContentResponse, error) {
+func (h turnipHandler) GetContentsByTagInclusive(ctx context.Context, request *turnip.GetContentsByTagRequest) (*turnip.MultipleContentResponse, error) {
 	if len(request.TagList) == 0 {
 		return nil, twirp.RequiredArgumentError("tag_list")
 	}
@@ -245,7 +245,26 @@ func (h turnipHandler) GetContentsByTag(ctx context.Context, request *turnip.Get
 		return nil, twerr
 	}
 
-	contentList, err := h.server.Contents.GetContentByTag(ctx, request.TagList)
+	contentList, err := h.server.Contents.GetContentByTagInclusive(ctx, request.TagList)
+	if err != nil {
+		util.LogDetailedError(err)
+		return nil, twirp.InternalErrorWith(err)
+	}
+
+	return &turnip.MultipleContentResponse{ItemList: contentList}, nil
+}
+
+func (h turnipHandler) GetContentsByTagStrict(ctx context.Context, request *turnip.GetContentsByTagRequest) (*turnip.MultipleContentResponse, error) {
+	if len(request.TagList) == 0 {
+		return nil, twirp.RequiredArgumentError("tag_list")
+	}
+
+	_, twerr := h.IsAuthenticated(ctx)
+	if twerr != nil {
+		return nil, twerr
+	}
+
+	contentList, err := h.server.Contents.GetContentByTagStrict(ctx, request.TagList)
 	if err != nil {
 		util.LogDetailedError(err)
 		return nil, twirp.InternalErrorWith(err)

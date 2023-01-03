@@ -9,6 +9,7 @@ import (
 type Tags interface {
 	UpdateTags(ctx context.Context, content *turnip.Content) error
 	GetTagsByContent(ctx context.Context, content *turnip.Content) ([]string, error)
-	GetContentIdsByTag(ctx context.Context, tagList []string) ([]string, error)
+	GetContentIdsByTagInclusive(ctx context.Context, tagList []string) ([]string, error)
+	GetContentIdsByTagStrict(ctx context.Context, tagList []string) ([]string, error)
 	DeleteTagsByContentId(ctx context.Context, primaryId string) error
 }

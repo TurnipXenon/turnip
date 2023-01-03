@@ -1,5 +1,5 @@
-github.com/TurnipXenon/turnip_api v0.0.0-20230103012346-2deb51c79fdc h1:CzwBmd+vgR6tzQ+HDwU+QEsjADReeerglpDmYJngDlQ=
-github.com/TurnipXenon/turnip_api v0.0.0-20230103012346-2deb51c79fdc/go.mod h1:ngMwedHDmhuA35oMoxaJPy0zt2AXR7ySoo02K7mYd3w=
+github.com/TurnipXenon/turnip_api v0.0.0-20230103050313-bf2ba45bae23 h1:7xvPk1zhk9ZBW9VGslnDafia8eKT0ggbPLB9OA8i4R8=
+github.com/TurnipXenon/turnip_api v0.0.0-20230103050313-bf2ba45bae23/go.mod h1:ngMwedHDmhuA35oMoxaJPy0zt2AXR7ySoo02K7mYd3w=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/golang/protobuf v1.5.0/go.mod h1:FsONVRAS9T7sI+LIUmWTfcYkHO4aIWwzhcaSAoJOfIk=
