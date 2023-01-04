@@ -3,6 +3,8 @@ package storage
 import (
 	"context"
 	"encoding/json"
+	"fmt"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -19,7 +21,7 @@ import (
 type contentsPostgresImpl struct {
 	db        *PostgresDb
 	tableName string
-	// todo: global secondary index
+	tags      Tags
 }
 
 func (c *contentsPostgresImpl) GetTableName() string {
@@ -66,6 +68,11 @@ func (c *contentsPostgresImpl) CreateContent(ctx context.Context, request *turni
 		return nil, util.WrapErrorWithDetails(err)
 	}
 
+	err = c.tags.UpdateTags(ctx, content)
+	if err != nil {
+		util.LogDetailedError(err)
+	}
+
 	return content, nil
 }
 
@@ -87,13 +94,9 @@ func pgxUuidToStringUuid(initial pgtype.UUID) (string, error) {
 	return final.String(), nil
 }
 
-func pgxByteToStringUuid(initial []byte) (string, error) {
-	final, err := uuid.FromBytes(initial)
-	if err != nil {
-		util.LogDetailedError(err)
-		return "", util.WrapErrorWithDetails(err)
-	}
-	return final.String(), nil
+func stringToStringPtr(value string) *string {
+	tmp := value
+	return &tmp
 }
 
 // GetContentById returns nil content also with nil error!
@@ -108,9 +111,9 @@ func (c *contentsPostgresImpl) GetContentById(ctx context.Context, idQuery strin
 	var primaryId pgtype.UUID
 	var authorId pgtype.UUID
 	var createdAt pgtype.Timestamp
-	var accessDetails, meta string
+	var title, description, contentString, accessDetails, meta *string
 	// todo: turn to CollectRow
-	err := row.Scan(&primaryId, &createdAt, &content.Title, &content.Description, &content.Content,
+	err := row.Scan(&primaryId, &createdAt, &title, &description, &contentString,
 		&content.TagList, &accessDetails, &meta, &authorId)
 	if err == pgx.ErrNoRows {
 		return nil, nil
@@ -120,12 +123,24 @@ func (c *contentsPostgresImpl) GetContentById(ctx context.Context, idQuery strin
 		return nil, util.WrapErrorWithDetails(err)
 	}
 
+	content.Title = derefString(title)
+	content.Description = derefString(description)
+	content.Content = derefString(contentString)
 	content.PrimaryId, err = pgxUuidToStringUuid(primaryId)
 	content.AuthorId, err = pgxUuidToStringUuid(authorId)
 	content.CreatedAt = timestamppb.New(createdAt.Time)
 	// todo: parse from string accessDetails and meta
 	content.AccessDetails = &turnip.AccessDetails{}
-	content.Meta = map[string]string{}
+	if meta == nil {
+		meta = stringToStringPtr("")
+	}
+	json.Unmarshal([]byte(*meta), &content.Meta)
+	//content.Meta = map[string]string{}
+
+	content.TagList, err = c.tags.GetTagsByContent(ctx, &content)
+	if err != nil {
+		util.LogDetailedError(err)
+	}
 
 	return &content, nil
 }
@@ -137,16 +152,12 @@ func derefString(p *string) string {
 	return *p
 }
 
-func (c *contentsPostgresImpl) GetAllContent(ctx context.Context) ([]*turnip.Content, error) {
+func (c *contentsPostgresImpl) rowsToContentList(ctx context.Context, rows pgx.Rows) ([]*turnip.Content, error) {
 	contentList := []*turnip.Content{}
-
-	// todo: handle paging
 	var primaryId, authorId pgtype.UUID
 	var createdAt pgtype.Timestamp
 	var title, description, content, accessDetails, meta *string
 	var tagList []string
-
-	rows, _ := c.db.Pool.Query(ctx, `SELECT * FROM "Content"`)
 	_, err := pgx.ForEachRow(rows, []any{&primaryId, &createdAt, &title, &description, &content,
 		&tagList, &accessDetails, &meta, &authorId}, func() error {
 		// todo: check if accessible, otherwise add to list
@@ -168,6 +179,11 @@ func (c *contentsPostgresImpl) GetAllContent(ctx context.Context) ([]*turnip.Con
 		}
 
 		newContent.CreatedAt = timestamppb.New(createdAt.Time)
+		newContent.TagList, err = c.tags.GetTagsByContent(ctx, newContent)
+		if meta == nil {
+			meta = stringToStringPtr("")
+		}
+		json.Unmarshal([]byte(*meta), &newContent.Meta)
 		contentList = append(contentList, newContent)
 		return nil
 	})
@@ -175,35 +191,60 @@ func (c *contentsPostgresImpl) GetAllContent(ctx context.Context) ([]*turnip.Con
 		util.LogDetailedError(err)
 		return nil, util.WrapErrorWithDetails(err)
 	}
-
 	return contentList, nil
 }
 
-func (c *contentsPostgresImpl) GetContentByTag(ctx context.Context, tag string) ([]*turnip.Content, error) {
-	//TODO implement me
-	panic("implement me")
+func (c *contentsPostgresImpl) GetAllContent(ctx context.Context) ([]*turnip.Content, error) {
+	rows, _ := c.db.Pool.Query(ctx, `SELECT * FROM "Content"`)
+	return c.rowsToContentList(ctx, rows)
+}
+
+func (c *contentsPostgresImpl) GetContentByTagInclusive(ctx context.Context, tag []string) ([]*turnip.Content, error) {
+	contentIdList, err := c.tags.GetContentIdsByTagInclusive(ctx, tag)
+	if err != nil {
+		util.LogDetailedError(err)
+		return nil, util.WrapErrorWithDetails(err)
+	}
+	if len(contentIdList) == 0 {
+		return nil, nil
+	}
+
+	for i := 0; i < len(contentIdList); i++ {
+		// transform with single quotes
+		contentIdList[i] = fmt.Sprintf("'%s'", contentIdList[i])
+	}
+	idList := strings.Join(contentIdList, ", ")
+	rows, _ := c.db.Pool.Query(ctx,
+		fmt.Sprintf(`SELECT * FROM "%s" WHERE primary_id IN (%s)`,
+			c.tableName, idList))
+	return c.rowsToContentList(ctx, rows)
 }
 
 func (c *contentsPostgresImpl) UpdateContent(ctx context.Context, newContent *turnip.Content) (*turnip.Content, error) {
-	// todo here
-
 	// todo: make setting more dynamic instead of setting everything
 	// todo set these attributes to UpdateContent
 	accessDetails := &turnip.AccessDetails{}
-	meta := ""
+	meta, err := json.Marshal(newContent.Meta)
+	if err != nil {
+		util.LogDetailedError(err)
+		return nil, util.WrapErrorWithDetails(err)
+	}
 
-	_, err := c.db.Pool.Exec(ctx, `UPDATE public."Content"
+	_, err = c.db.Pool.Exec(ctx, `UPDATE public."Content"
 		SET title=$1, description=$2, content=$3, tag_list=$4, access_details=$5, meta=$6
 		WHERE primary_id = $7`,
 		newContent.Title, newContent.Description, newContent.Content, // 1-3
 		newContent.TagList, accessDetails, meta, newContent.PrimaryId, // 4-7
 	)
-
-	// todo: put NoRowErr check here!
-
 	if err != nil {
 		util.LogDetailedError(err)
 		return nil, util.WrapErrorWithDetails(err)
+	}
+
+	// todo: put NoRowErr check here!
+	err = c.tags.UpdateTags(ctx, newContent)
+	if err != nil {
+		util.LogDetailedError(err)
 	}
 
 	return newContent, nil
@@ -221,12 +262,34 @@ func (c *contentsPostgresImpl) DeleteContentById(ctx context.Context, primaryId 
 	return nil, nil
 }
 
-func NewContentsPostgres(ctx context.Context, d *PostgresDb) Contents {
+func (c *contentsPostgresImpl) GetContentByTagStrict(ctx context.Context, tag []string) ([]*turnip.Content, error) {
+	contentIdList, err := c.tags.GetContentIdsByTagStrict(ctx, tag) // todo
+	if err != nil {
+		util.LogDetailedError(err)
+		return nil, util.WrapErrorWithDetails(err)
+	}
+	if len(contentIdList) == 0 {
+		return nil, nil
+	}
+
+	for i := 0; i < len(contentIdList); i++ {
+		// transform with single quotes
+		contentIdList[i] = fmt.Sprintf("'%s'", contentIdList[i])
+	}
+	idList := strings.Join(contentIdList, ", ")
+	rows, _ := c.db.Pool.Query(ctx,
+		fmt.Sprintf(`SELECT * FROM "%s" WHERE primary_id IN (%s)`,
+			c.tableName, idList))
+	return c.rowsToContentList(ctx, rows)
+}
+
+func NewContentsPostgres(ctx context.Context, d *PostgresDb, tags Tags) Contents {
 	// primary: primary id
 	// sort: created at
 	t := contentsPostgresImpl{
 		db:        d,
 		tableName: "Content",
+		tags:      tags,
 	}
 
 	SetupTable(ctx, d, &t)

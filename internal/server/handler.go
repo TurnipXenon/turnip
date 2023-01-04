@@ -111,6 +111,10 @@ func (h turnipHandler) IsAuthenticated(ctx context.Context) (*turnip.User, twirp
 }
 
 func (h turnipHandler) CreateContent(ctx context.Context, request *turnip.ContentRequestResponse) (*turnip.ContentRequestResponse, error) {
+	if request.Item == nil {
+		return nil, twirp.RequiredArgumentError("item")
+	}
+
 	user, twerr := h.IsAuthenticated(ctx)
 	if user == nil {
 		return nil, twerr
@@ -206,9 +210,12 @@ func (h turnipHandler) UpdateContent(ctx context.Context, request *turnip.Conten
 
 func (h turnipHandler) DeleteContent(ctx context.Context, request *turnip.PrimaryIdRequest) (*turnip.ContentRequestResponse, error) {
 	// todo: add access check later
+	if len(request.PrimaryId) == 0 {
+		return nil, twirp.RequiredArgumentError("primary_id")
+	}
+
 	_, twerr := h.IsAuthenticated(ctx)
 	if twerr != nil {
-		util.LogDetailedError(twerr)
 		return nil, twerr
 	}
 
@@ -226,4 +233,42 @@ func (h turnipHandler) DeleteContent(ctx context.Context, request *turnip.Primar
 	// todo: check access details for the post and see if author can see it\
 
 	return &turnip.ContentRequestResponse{Item: oldContent.Item}, nil
+}
+
+func (h turnipHandler) GetContentsByTagInclusive(ctx context.Context, request *turnip.GetContentsByTagRequest) (*turnip.MultipleContentResponse, error) {
+	if len(request.TagList) == 0 {
+		return nil, twirp.RequiredArgumentError("tag_list")
+	}
+
+	_, twerr := h.IsAuthenticated(ctx)
+	if twerr != nil {
+		return nil, twerr
+	}
+
+	contentList, err := h.server.Contents.GetContentByTagInclusive(ctx, request.TagList)
+	if err != nil {
+		util.LogDetailedError(err)
+		return nil, twirp.InternalErrorWith(err)
+	}
+
+	return &turnip.MultipleContentResponse{ItemList: contentList}, nil
+}
+
+func (h turnipHandler) GetContentsByTagStrict(ctx context.Context, request *turnip.GetContentsByTagRequest) (*turnip.MultipleContentResponse, error) {
+	if len(request.TagList) == 0 {
+		return nil, twirp.RequiredArgumentError("tag_list")
+	}
+
+	_, twerr := h.IsAuthenticated(ctx)
+	if twerr != nil {
+		return nil, twerr
+	}
+
+	contentList, err := h.server.Contents.GetContentByTagStrict(ctx, request.TagList)
+	if err != nil {
+		util.LogDetailedError(err)
+		return nil, twirp.InternalErrorWith(err)
+	}
+
+	return &turnip.MultipleContentResponse{ItemList: contentList}, nil
 }

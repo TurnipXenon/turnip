@@ -94,6 +94,7 @@ func RunServeMux(s *Server, flags *models.RunFlags) {
 			"Authorization",
 		},
 	})
+	c.Log = nil // remove logging for the cors middleware
 	corsHandler := c.Handler(authWrapper)
 
 	// todo: enforce timeouts

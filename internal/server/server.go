@@ -18,6 +18,7 @@ type Server struct {
 	Contents storage.Contents
 	db       *storage.PostgresDb
 	Metadata storage.Metadata
+	Tags     storage.Tags
 }
 
 // InitializeServer remember to defer cleanup!
@@ -47,12 +48,10 @@ func InitializeServer(ctx context.Context, flags *models.RunFlags) *Server {
 		log.Fatalf("TODO: Unimplemented")
 	}
 
-	// todo
 	s.Users = storage.NewUsersPostgres(ctx, s.db, sysConf)
-	// todo(turnip)
 	s.Tokens = storage.NewTokensPostgres(ctx, s.db)
-	// todo(turnip)
-	s.Contents = storage.NewContentsPostgres(ctx, s.db)
+	s.Tags = storage.NewTagsPostgres(ctx, s.db)
+	s.Contents = storage.NewContentsPostgres(ctx, s.db, s.Tags)
 	// endregion db
 
 	return &s
