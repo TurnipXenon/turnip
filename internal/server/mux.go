@@ -2,7 +2,6 @@ package server
 
 import (
 	"fmt"
-	"html/template"
 	"log"
 	"net/http"
 	"time"
@@ -18,31 +17,6 @@ import (
 
 type Mux struct {
 	HostMap map[string]models.Host
-}
-
-func (m *Mux) handleIndex(response http.ResponseWriter, request *http.Request) {
-	// todo(turnip): delete
-	path := request.URL.Path
-	if path != "/" {
-		// todo: not found page!
-		response.WriteHeader(http.StatusNotFound)
-		return
-	}
-
-	data := models.UserImpl{
-		ActualHost: request.Host,
-	}
-
-	data.Initialize(request, m.HostMap)
-
-	// Reference: https://gowebexamples.com/templates/
-	tmpl := template.Must(template.ParseFiles("./internal/templates/main.html"))
-	err := tmpl.Execute(response, data)
-	if err != nil {
-		print(err)
-		// todo: log?
-		return
-	}
 }
 
 func (m *Mux) serveSingle(pattern string, filename string, Mux *mux.Router) {
