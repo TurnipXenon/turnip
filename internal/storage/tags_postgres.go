@@ -144,10 +144,12 @@ func (t *tagsPostgresImpl) GetContentIdsByTagStrict(ctx context.Context, tagList
 	}
 	sort.Strings(l)
 	inParam := strings.Join(l, ", ")
+	// from a_horse_with_no_name @ https://dba.stackexchange.com/a/190761
 	query := fmt.Sprintf(`SELECT content_id
 FROM "Tag"
+WHERE tag IN (%s)
 GROUP BY content_id
-HAVING array_agg(tag order by tag) = array [%s]`, inParam)
+HAVING array_agg(tag order by tag) = array [%s]`, inParam, inParam)
 	rows, _ := t.db.Pool.Query(ctx, query)
 	contentIdList, err := pgx.CollectRows(rows, func(row pgx.CollectableRow) (string, error) {
 		var n string
