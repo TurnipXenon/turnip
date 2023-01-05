@@ -43,6 +43,24 @@ func stringListToSqlInArgument(valueList []string) string {
 	return strings.Join(l, ", ")
 }
 
+// returns a string containing a list parameterized values
+// example (i1, i2), 0 =>  "$1, $2", [i1, i2]
+// example (i1, i2, i3), 5 =>  $6, $7, $8
+func stringListToSanitizedSql(valueList []any, offset int) string {
+	if len(valueList) == 0 {
+		return ""
+	}
+
+	var l []string
+	var x []any
+	for i, v := range valueList {
+		l = append(l, fmt.Sprintf("$%d", i+1))
+		x = append(x, v)
+	}
+
+	return strings.Join(l, ",")
+}
+
 func (t *tagsPostgresImpl) UpdateTags(ctx context.Context, content *turnip.Content) error {
 	// get old tags
 	oldTagList, err := t.GetTagsByContent(ctx, content)
@@ -65,15 +83,15 @@ func (t *tagsPostgresImpl) UpdateTags(ctx context.Context, content *turnip.Conte
 	var tagsToDeleteList []string
 	for _, s := range oldTagList {
 		if !newTagMap[s] {
-			tagsToDeleteList = append(tagsToDeleteList, fmt.Sprintf("'%s'", s))
+			tagsToDeleteList = append(tagsToDeleteList, s)
 		}
 	}
 	if len(tagsToDeleteList) > 0 {
-		tagsToDeleteStr := strings.Join(tagsToDeleteList, ", ")
+		v := append([]any{content.PrimaryId}, convertToAnyList(tagsToDeleteList))
+		query := stringListToSanitizedSql(v, 0)
 		_, err = t.db.Pool.Exec(ctx,
 			fmt.Sprintf(`DELETE FROM "%s" WHERE tag IN (%s) AND content_id=$1`,
-				t.tableName, tagsToDeleteStr),
-			content.PrimaryId)
+				t.tableName, query), v...)
 	}
 
 	// if new tag not in old tag, create
@@ -110,14 +128,24 @@ func (t *tagsPostgresImpl) GetTagsByContent(ctx context.Context, content *turnip
 	return oldTagList, nil
 }
 
+func convertToAnyList[T any](t []T) []any {
+	var a []any
+	for _, v := range t {
+		a = append(a, v)
+	}
+	return a
+}
+
 func (t *tagsPostgresImpl) GetContentIdsByTagInclusive(ctx context.Context, tagList []string) ([]string, error) {
 	if len(tagList) == 0 {
 		return nil, nil
 	}
 
-	inParam := stringListToSqlInArgument(tagList)
+	// todo: might need normalization?
+	value := convertToAnyList(tagList)
+	query := stringListToSanitizedSql(value, 0)
 	rows, _ := t.db.Pool.Query(ctx,
-		fmt.Sprintf(`SELECT content_id FROM "Tag" WHERE tag in (%s)`, inParam))
+		fmt.Sprintf(`SELECT content_id FROM "Tag" WHERE tag in (%s)`, query), value...)
 	contentIdList, err := pgx.CollectRows(rows, func(row pgx.CollectableRow) (string, error) {
 		var n string
 		err := row.Scan(&n)
@@ -140,17 +168,20 @@ func (t *tagsPostgresImpl) GetContentIdsByTagStrict(ctx context.Context, tagList
 	// todo: order strings
 	var l []string
 	for _, s := range tagList {
-		l = append(l, fmt.Sprintf("'%s'", strings.ToLower(s)))
+		l = append(l, strings.ToLower(s))
 	}
 	sort.Strings(l)
-	inParam := strings.Join(l, ", ")
 	// from a_horse_with_no_name @ https://dba.stackexchange.com/a/190761
+	vl := convertToAnyList(l)
+	q1 := stringListToSanitizedSql(vl, 0)
+	q2 := stringListToSanitizedSql(vl, len(vl))
+	vl = append(vl, vl)
 	query := fmt.Sprintf(`SELECT content_id
 FROM "Tag"
 WHERE tag IN (%s)
 GROUP BY content_id
-HAVING array_agg(tag order by tag) = array [%s]`, inParam, inParam)
-	rows, _ := t.db.Pool.Query(ctx, query)
+HAVING array_agg(tag order by tag) = array [%s]`, q1, q2)
+	rows, _ := t.db.Pool.Query(ctx, query, vl...)
 	contentIdList, err := pgx.CollectRows(rows, func(row pgx.CollectableRow) (string, error) {
 		var n string
 		err := row.Scan(&n)
