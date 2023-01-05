@@ -54,7 +54,7 @@ func stringListToSanitizedSql(valueList []any, offset int) string {
 	var l []string
 	var x []any
 	for i, v := range valueList {
-		l = append(l, fmt.Sprintf("$%d", i+1))
+		l = append(l, fmt.Sprintf("$%d", i+1+offset))
 		x = append(x, v)
 	}
 
@@ -175,7 +175,7 @@ func (t *tagsPostgresImpl) GetContentIdsByTagStrict(ctx context.Context, tagList
 	vl := convertToAnyList(l)
 	q1 := stringListToSanitizedSql(vl, 0)
 	q2 := stringListToSanitizedSql(vl, len(vl))
-	vl = append(vl, vl)
+	vl = append(vl, vl...)
 	query := fmt.Sprintf(`SELECT content_id
 FROM "Tag"
 WHERE tag IN (%s)
