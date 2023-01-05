@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -209,14 +208,12 @@ func (c *contentsPostgresImpl) GetContentByTagInclusive(ctx context.Context, tag
 		return nil, nil
 	}
 
-	for i := 0; i < len(contentIdList); i++ {
-		// transform with single quotes
-		contentIdList[i] = fmt.Sprintf("'%s'", contentIdList[i])
-	}
-	idList := strings.Join(contentIdList, ", ")
+	// todo: might need normalization
+	vl := convertToAnyList(contentIdList)
+	q := stringListToSanitizedSql(vl, 0)
 	rows, _ := c.db.Pool.Query(ctx,
 		fmt.Sprintf(`SELECT * FROM "%s" WHERE primary_id IN (%s)`,
-			c.tableName, idList))
+			c.tableName, q), vl...)
 	return c.rowsToContentList(ctx, rows)
 }
 
@@ -272,14 +269,12 @@ func (c *contentsPostgresImpl) GetContentByTagStrict(ctx context.Context, tag []
 		return nil, nil
 	}
 
-	for i := 0; i < len(contentIdList); i++ {
-		// transform with single quotes
-		contentIdList[i] = fmt.Sprintf("'%s'", contentIdList[i])
-	}
-	idList := strings.Join(contentIdList, ", ")
+	// todo: normalize
+	vl := convertToAnyList(contentIdList)
+	q := stringListToSanitizedSql(vl, 0)
 	rows, _ := c.db.Pool.Query(ctx,
 		fmt.Sprintf(`SELECT * FROM "%s" WHERE primary_id IN (%s)`,
-			c.tableName, idList))
+			c.tableName, q), vl...)
 	return c.rowsToContentList(ctx, rows)
 }
 
