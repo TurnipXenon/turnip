@@ -3,7 +3,7 @@ module github.com/TurnipXenon/turnip
 go 1.18
 
 require (
-	github.com/TurnipXenon/turnip_api v0.0.0-20230103050313-bf2ba45bae23
+	github.com/TurnipXenon/turnip_api v0.0.0-20230107033414-a4e030c87e76
 	github.com/google/uuid v1.3.0
 	github.com/gorilla/mux v1.8.0
 	github.com/jackc/pgx/v5 v5.2.0
@@ -15,6 +15,7 @@ require (
 )
 
 require (
+	github.com/TurnipXenon/potato_api v0.0.0-20230107042309-b901429045c5 // indirect
 	github.com/google/go-cmp v0.5.8 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20200714003250-2b9c44734f2b // indirect
