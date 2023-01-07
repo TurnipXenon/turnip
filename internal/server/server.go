@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/TurnipXenon/turnip/internal/clients"
 	"github.com/TurnipXenon/turnip/internal/config"
 	"github.com/TurnipXenon/turnip/internal/models"
 	"github.com/TurnipXenon/turnip/internal/storage"
@@ -19,6 +20,7 @@ type Server struct {
 	db       *storage.PostgresDb
 	Metadata storage.Metadata
 	Tags     storage.Tags
+	Potato   clients.Potato
 }
 
 // InitializeServer remember to defer cleanup!
@@ -53,6 +55,8 @@ func InitializeServer(ctx context.Context, flags *models.RunFlags) *Server {
 	s.Tags = storage.NewTagsPostgres(ctx, s.db)
 	s.Contents = storage.NewContentsPostgres(ctx, s.db, s.Tags)
 	// endregion db
+
+	s.Potato = clients.NewPotato(flags)
 
 	return &s
 }
