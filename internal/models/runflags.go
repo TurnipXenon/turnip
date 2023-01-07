@@ -14,6 +14,8 @@ type RunFlags struct {
 	IsLocal            bool
 	PostgresConnection string
 	CorsAllowList      []string
+	PotatoToken        string
+	PotatoUrl          string
 }
 
 func InitializeFlags() *RunFlags {
@@ -48,6 +50,17 @@ func InitializeFlags() *RunFlags {
 	}
 	if flags.CorsAllowList == nil {
 		flags.CorsAllowList = []string{}
+	}
+
+	// todo: support multiple potato endpoints
+	flags.PotatoToken = os.Getenv("POTATO_TOKEN")
+	if flags.PotatoToken == "" {
+		flags.PotatoToken = "DEBUG_TOKEN"
+	}
+
+	flags.PotatoUrl = os.Getenv("POTATO_URL")
+	if flags.PotatoUrl == "" {
+		flags.PotatoUrl = "http://localhost:3000/api"
 	}
 
 	return &flags

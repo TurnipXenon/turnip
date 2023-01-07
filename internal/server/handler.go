@@ -272,3 +272,22 @@ func (h turnipHandler) GetContentsByTagStrict(ctx context.Context, request *turn
 
 	return &turnip.MultipleContentResponse{ItemList: contentList}, nil
 }
+
+func (h turnipHandler) RevalidateStaticPath(ctx context.Context, request *turnip.RevalidateStaticPathRequest) (*turnip.RevalidateStaticPathResponse, error) {
+	user, twerr := h.IsAuthenticated(ctx)
+	if user == nil {
+		return nil, twerr
+	}
+
+	if request.Path == "" {
+		return nil, twirp.RequiredArgumentError("path")
+	}
+
+	// todo use context to cause time out with client in potato!
+	err := h.server.Potato.RevalidateStaticPath(request.Path)
+	if err != nil {
+		util.LogDetailedError(err)
+		return nil, twirp.InternalErrorWith(err)
+	}
+	return &turnip.RevalidateStaticPathResponse{Message: "Success!"}, nil
+}
