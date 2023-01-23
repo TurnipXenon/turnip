@@ -148,7 +148,28 @@ func (h turnipHandler) GetContentById(ctx context.Context, request *turnip.Prima
 		return nil, twirp.NotFoundError(fmt.Sprintf("Content with id %s not found", request.PrimaryId))
 	}
 
-	// todo: check access details for the post and see if author can see it\
+	// todo: check access details for the post and see if author can see it
+
+	return &turnip.ContentRequestResponse{Item: content}, nil
+}
+
+func (h turnipHandler) GetContentBySlug(ctx context.Context, request *turnip.GetContentBySlugRequest) (*turnip.ContentRequestResponse, error) {
+	// todo: add access check later
+	_, twerr := h.IsAuthenticated(ctx)
+	if twerr != nil {
+		util.LogDetailedError(twerr)
+		return nil, twerr
+	}
+
+	content, err := h.server.Contents.GetContentBySlug(ctx, request.Slug)
+	if err != nil {
+		return nil, twirp.InternalErrorWith(err)
+	}
+	if content == nil {
+		return nil, twirp.NotFoundError(fmt.Sprintf("Content with id %s not found", request.Slug))
+	}
+
+	// todo: check access details for the post and see if author can see it
 
 	return &turnip.ContentRequestResponse{Item: content}, nil
 }
@@ -289,5 +310,7 @@ func (h turnipHandler) RevalidateStaticPath(ctx context.Context, request *turnip
 		util.LogDetailedError(err)
 		return nil, twirp.InternalErrorWith(err)
 	}
+
+	// todo: waterfall results to here but maybe sanitize it
 	return &turnip.RevalidateStaticPathResponse{Message: "Success!"}, nil
 }

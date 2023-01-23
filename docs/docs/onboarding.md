@@ -33,6 +33,15 @@ Using any other port may not work.
 
 If no port argument was given, we default to port 8000.
 
+Envs:
+```
+PGCONN
+DATABASE_URL by DigitalOcean
+CORS_ALLOWLIST=["", ""]
+POTATO_TOKEN
+POTATO_URL
+```
+
 **todo: postgres onboarding**
 
 logs:

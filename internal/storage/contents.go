@@ -11,6 +11,7 @@ import (
 type Contents interface {
 	CreateContent(ctx context.Context, request *turnip.ContentRequestResponse, user *turnip.User) (*turnip.Content, error)
 	GetContentById(ctx context.Context, primary string) (*turnip.Content, error)
+	GetContentBySlug(ctx context.Context, slug string) (*turnip.Content, error)
 	GetAllContent(ctx context.Context) ([]*turnip.Content, error)
 	GetContentByTagInclusive(ctx context.Context, tag []string) ([]*turnip.Content, error)
 	GetContentByTagStrict(ctx context.Context, tag []string) ([]*turnip.Content, error)
