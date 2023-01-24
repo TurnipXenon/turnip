@@ -43,11 +43,6 @@ func (c *contentsPostgresImpl) CreateContent(ctx context.Context, request *turni
 	content.CreatedAt = timestamppb.Now()
 	content.AuthorId = user.PrimaryId
 
-	accessDetails, err := json.Marshal(content.AccessDetails)
-	if err != nil {
-		util.LogDetailedError(err)
-		return nil, util.WrapErrorWithDetails(err)
-	}
 	meta, err := json.Marshal(content.Meta)
 	if err != nil {
 		util.LogDetailedError(err)
@@ -55,12 +50,12 @@ func (c *contentsPostgresImpl) CreateContent(ctx context.Context, request *turni
 	}
 
 	_, err = c.db.Pool.Exec(ctx, `INSERT INTO "Content"
-    	(primary_id, created_at, title, description, content, tag_list, access_details, meta, author_id, slug) 
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
+    	(primary_id, created_at, title, description, content, tag_list, meta, author_id, slug) 
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
 		content.PrimaryId, content.CreatedAt.AsTime().Format(time.RFC3339), // primary_id: $1, created_at: $2
 		content.Title, content.Description, content.Content, // title: $3, description: $4, content: $5
-		content.TagList, accessDetails, meta, // tag_list: $6, access_details: $7, meta: $8, author_id: $9
-		content.AuthorId, content.Slug, // author_id: $9, slug: $10 todo(turnip): missing media!
+		content.TagList, meta, // tag_list: $6, meta: $7
+		content.AuthorId, content.Slug, // author_id: $8, slug: $9 todo(turnip): missing media!
 	)
 	if err != nil {
 		util.LogDetailedError(err)
@@ -129,12 +124,10 @@ func (c *contentsPostgresImpl) GetContentById(ctx context.Context, idQuery strin
 	content.Title = derefString(title)
 	content.Description = derefString(description)
 	content.Content = derefString(contentString)
-	content.Slug = derefString(slugString)
+	content.Slug = slugString
 	content.PrimaryId, err = pgxUuidToStringUuid(primaryId)
 	content.AuthorId, err = pgxUuidToStringUuid(authorId)
 	content.CreatedAt = timestamppb.New(createdAt.Time)
-	// todo: parse from string accessDetails and meta
-	content.AccessDetails = &turnip.AccessDetails{}
 	if meta == nil {
 		meta = stringToStringPtr("")
 	}
@@ -178,12 +171,11 @@ func (c *contentsPostgresImpl) GetContentBySlug(ctx context.Context, slug string
 	content.Title = derefString(title)
 	content.Description = derefString(description)
 	content.Content = derefString(contentString)
-	content.Slug = derefString(slugString)
+	content.Slug = slugString
 	content.PrimaryId, err = pgxUuidToStringUuid(primaryId)
 	content.AuthorId, err = pgxUuidToStringUuid(authorId)
 	content.CreatedAt = timestamppb.New(createdAt.Time)
 	// todo: parse from string accessDetails and meta
-	content.AccessDetails = &turnip.AccessDetails{}
 	if meta == nil {
 		meta = stringToStringPtr("")
 	}
@@ -215,13 +207,12 @@ func (c *contentsPostgresImpl) rowsToContentList(ctx context.Context, rows pgx.R
 		&tagList, &accessDetails, &meta, &authorId, &slugString}, func() error {
 		// todo: check if accessible, otherwise add to list
 		newContent := &turnip.Content{
-			Title:         derefString(title),
-			Description:   derefString(description),
-			Content:       derefString(content),
-			Slug:          derefString(slugString),
-			TagList:       tagList,
-			AccessDetails: nil, // todo parse
-			Meta:          nil, // todo parse
+			Title:       derefString(title),
+			Description: derefString(description),
+			Content:     derefString(content),
+			Slug:        slugString,
+			TagList:     tagList,
+			Meta:        nil, // todo parse
 			// todo media field
 		}
 

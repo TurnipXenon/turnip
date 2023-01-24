@@ -6,6 +6,10 @@ github.com/TurnipXenon/turnip_api v0.0.0-20230123015904-c0cfd34a97b7 h1:Awhv0jgb
 github.com/TurnipXenon/turnip_api v0.0.0-20230123015904-c0cfd34a97b7/go.mod h1:ngMwedHDmhuA35oMoxaJPy0zt2AXR7ySoo02K7mYd3w=
 github.com/TurnipXenon/turnip_api v0.0.0-20230123025822-661f117591f6 h1:r3xGJeuHCLDs79nmoHmNp05U7rKn/D5E3B4u+unsaek=
 github.com/TurnipXenon/turnip_api v0.0.0-20230123025822-661f117591f6/go.mod h1:ngMwedHDmhuA35oMoxaJPy0zt2AXR7ySoo02K7mYd3w=
+github.com/TurnipXenon/turnip_api v0.0.0-20230124011918-d53460ac7188 h1:rVfgDIGfYessPS+557Z0LQnbcTfA3LlZTJQo6zUH1k8=
+github.com/TurnipXenon/turnip_api v0.0.0-20230124011918-d53460ac7188/go.mod h1:ngMwedHDmhuA35oMoxaJPy0zt2AXR7ySoo02K7mYd3w=
+github.com/TurnipXenon/turnip_api v0.0.0-20230124015824-183865886bd6 h1:JQgpMoxAs/Zhwoo0NTvq0xZOefXC1XGCGNTtITOj3tc=
+github.com/TurnipXenon/turnip_api v0.0.0-20230124015824-183865886bd6/go.mod h1:ngMwedHDmhuA35oMoxaJPy0zt2AXR7ySoo02K7mYd3w=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/golang/protobuf v1.5.0/go.mod h1:FsONVRAS9T7sI+LIUmWTfcYkHO4aIWwzhcaSAoJOfIk=
