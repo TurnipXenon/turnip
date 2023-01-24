@@ -30,6 +30,7 @@ func NewPotato(flags *models.RunFlags) Potato {
 }
 
 func (p *potatoImpl) RevalidateStaticPath(path string) error {
+	// todo: rename to revalidate path to make it consistent with potato_api
 	// todo: make less hardcoded
 	// from https://www.digitalocean.com/community/tutorials/how-to-make-http-requests-in-go
 	reqBody := potato.RevalidatePathRequest{
@@ -40,7 +41,6 @@ func (p *potatoImpl) RevalidateStaticPath(path string) error {
 		util.LogDetailedError(err)
 		return util.WrapErrorWithDetails(nil)
 	}
-	fmt.Println(string(jsonBody))
 	bodyReader := bytes.NewReader(jsonBody)
 	requestURL := fmt.Sprintf("%s/revalidate", p.baseUrl)
 	req, err := http.NewRequest(http.MethodPost, requestURL, bodyReader)
@@ -68,6 +68,7 @@ func (p *potatoImpl) RevalidateStaticPath(path string) error {
 			resStr = string(resBody)
 		}
 
+		// todo: don't log if it's a 400 error?
 		newErr := fmt.Errorf("failed to revalidate with code %s and message %s", resp.Status, resStr)
 		util.LogDetailedError(newErr)
 		return util.WrapErrorWithDetails(err)

@@ -43,11 +43,6 @@ func (c *contentsPostgresImpl) CreateContent(ctx context.Context, request *turni
 	content.CreatedAt = timestamppb.Now()
 	content.AuthorId = user.PrimaryId
 
-	accessDetails, err := json.Marshal(content.AccessDetails)
-	if err != nil {
-		util.LogDetailedError(err)
-		return nil, util.WrapErrorWithDetails(err)
-	}
 	meta, err := json.Marshal(content.Meta)
 	if err != nil {
 		util.LogDetailedError(err)
@@ -55,12 +50,12 @@ func (c *contentsPostgresImpl) CreateContent(ctx context.Context, request *turni
 	}
 
 	_, err = c.db.Pool.Exec(ctx, `INSERT INTO "Content"
-    	(primary_id, created_at, title, description, content, tag_list, access_details, meta, author_id) 
+    	(primary_id, created_at, title, description, content, tag_list, meta, author_id, slug) 
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
 		content.PrimaryId, content.CreatedAt.AsTime().Format(time.RFC3339), // primary_id: $1, created_at: $2
 		content.Title, content.Description, content.Content, // title: $3, description: $4, content: $5
-		content.TagList, accessDetails, meta, // tag_list: $6, access_details: $7, meta: $8, author_id: $9
-		content.AuthorId, // author_id: $9, todo(turnip): missing media!
+		content.TagList, meta, // tag_list: $6, meta: $7
+		content.AuthorId, content.Slug, // author_id: $8, slug: $9 todo(turnip): missing media!
 	)
 	if err != nil {
 		util.LogDetailedError(err)
@@ -101,6 +96,10 @@ func stringToStringPtr(value string) *string {
 // GetContentById returns nil content also with nil error!
 // todo: document behavior
 func (c *contentsPostgresImpl) GetContentById(ctx context.Context, idQuery string) (*turnip.Content, error) {
+	if idQuery == "" {
+		return nil, fmt.Errorf("id is empty")
+	}
+
 	row := c.db.Pool.QueryRow(ctx, `SELECT t.*
                FROM "Content" t
                WHERE primary_id = $1
@@ -110,10 +109,10 @@ func (c *contentsPostgresImpl) GetContentById(ctx context.Context, idQuery strin
 	var primaryId pgtype.UUID
 	var authorId pgtype.UUID
 	var createdAt pgtype.Timestamp
-	var title, description, contentString, accessDetails, meta *string
+	var title, description, contentString, accessDetails, meta, slugString *string
 	// todo: turn to CollectRow
 	err := row.Scan(&primaryId, &createdAt, &title, &description, &contentString,
-		&content.TagList, &accessDetails, &meta, &authorId)
+		&content.TagList, &accessDetails, &meta, &authorId, &slugString)
 	if err == pgx.ErrNoRows {
 		return nil, nil
 	}
@@ -125,11 +124,58 @@ func (c *contentsPostgresImpl) GetContentById(ctx context.Context, idQuery strin
 	content.Title = derefString(title)
 	content.Description = derefString(description)
 	content.Content = derefString(contentString)
+	content.Slug = slugString
+	content.PrimaryId, err = pgxUuidToStringUuid(primaryId)
+	content.AuthorId, err = pgxUuidToStringUuid(authorId)
+	content.CreatedAt = timestamppb.New(createdAt.Time)
+	if meta == nil {
+		meta = stringToStringPtr("")
+	}
+	json.Unmarshal([]byte(*meta), &content.Meta)
+	//content.Meta = map[string]string{}
+
+	content.TagList, err = c.tags.GetTagsByContent(ctx, &content)
+	if err != nil {
+		util.LogDetailedError(err)
+	}
+
+	return &content, nil
+}
+
+func (c *contentsPostgresImpl) GetContentBySlug(ctx context.Context, slug string) (*turnip.Content, error) {
+	if slug == "" {
+		return nil, fmt.Errorf("slug is empty")
+	}
+
+	row := c.db.Pool.QueryRow(ctx, `SELECT t.*
+               FROM "Content" t
+               WHERE slug = $1
+               LIMIT 1`, slug)
+
+	var content turnip.Content
+	var primaryId pgtype.UUID
+	var authorId pgtype.UUID
+	var createdAt pgtype.Timestamp
+	var title, description, contentString, accessDetails, meta, slugString *string
+	// todo: turn to CollectRow
+	err := row.Scan(&primaryId, &createdAt, &title, &description, &contentString,
+		&content.TagList, &accessDetails, &meta, &authorId, &slugString)
+	if err == pgx.ErrNoRows {
+		return nil, nil
+	}
+	if err != nil {
+		util.LogDetailedError(err)
+		return nil, util.WrapErrorWithDetails(err)
+	}
+
+	content.Title = derefString(title)
+	content.Description = derefString(description)
+	content.Content = derefString(contentString)
+	content.Slug = slugString
 	content.PrimaryId, err = pgxUuidToStringUuid(primaryId)
 	content.AuthorId, err = pgxUuidToStringUuid(authorId)
 	content.CreatedAt = timestamppb.New(createdAt.Time)
 	// todo: parse from string accessDetails and meta
-	content.AccessDetails = &turnip.AccessDetails{}
 	if meta == nil {
 		meta = stringToStringPtr("")
 	}
@@ -155,18 +201,18 @@ func (c *contentsPostgresImpl) rowsToContentList(ctx context.Context, rows pgx.R
 	contentList := []*turnip.Content{}
 	var primaryId, authorId pgtype.UUID
 	var createdAt pgtype.Timestamp
-	var title, description, content, accessDetails, meta *string
+	var title, description, content, accessDetails, meta, slugString *string
 	var tagList []string
 	_, err := pgx.ForEachRow(rows, []any{&primaryId, &createdAt, &title, &description, &content,
-		&tagList, &accessDetails, &meta, &authorId}, func() error {
+		&tagList, &accessDetails, &meta, &authorId, &slugString}, func() error {
 		// todo: check if accessible, otherwise add to list
 		newContent := &turnip.Content{
-			Title:         derefString(title),
-			Description:   derefString(description),
-			Content:       derefString(content),
-			TagList:       tagList,
-			AccessDetails: nil, // todo parse
-			Meta:          nil, // todo parse
+			Title:       derefString(title),
+			Description: derefString(description),
+			Content:     derefString(content),
+			Slug:        slugString,
+			TagList:     tagList,
+			Meta:        nil, // todo parse
 			// todo media field
 		}
 
@@ -228,10 +274,11 @@ func (c *contentsPostgresImpl) UpdateContent(ctx context.Context, newContent *tu
 	}
 
 	_, err = c.db.Pool.Exec(ctx, `UPDATE public."Content"
-		SET title=$1, description=$2, content=$3, tag_list=$4, access_details=$5, meta=$6
+		SET title=$1, description=$2, content=$3, tag_list=$4, access_details=$5, meta=$6, slug=$8
 		WHERE primary_id = $7`,
 		newContent.Title, newContent.Description, newContent.Content, // 1-3
 		newContent.TagList, accessDetails, meta, newContent.PrimaryId, // 4-7
+		newContent.Slug, // 8
 	)
 	if err != nil {
 		util.LogDetailedError(err)
